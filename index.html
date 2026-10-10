@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asesor de protecciones REBT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: pasos numerados a la izquierda, resultado fijo a la derecha; en móvil una columna y barra de resultado abajo. */
+:root{
+  --bg:#f0f1f3; --panel:#ffffff; --ink:#171a1f; --mute:#5d646e; --line:#dcdfe4; --field:#f6f7f9;
+  --accent:#1f3b63; --accent-ink:#ffffff; --accent-soft:#e3e9f2; --sun:#e0a030; --s1:#2f6fb5; --s2:#c8641a; --s3:#1f8a7a; --s4:#7a55b0;
+  --ok:#17773a; --ok-bg:#dff3e5; --warn:#8a5a00; --warn-bg:#fcefcf; --bad:#a8271e; --bad-bg:#fbe2df;
+  --fase:#7a4a2b; --fase2:#222426; --fase3:#8d9296; --neutro:#3c8fd6; --pe1:#3f9d3a; --pe2:#e9d02b; --cu:#cf7a3c; --al:#c3c9cd;
+  --shadow:0 1px 2px rgba(20,24,31,.06),0 6px 18px rgba(20,24,31,.06);
+  --f-ui:"Figtree",system-ui,"Segoe UI",Roboto,sans-serif; --f-num:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101216; --panel:#1a1d23; --ink:#eceef1; --mute:#9ba2ad; --line:#2d323b; --field:#13161b;
+  --accent:#9dbcec; --accent-ink:#0c1a30; --accent-soft:#222c3d; --sun:#f2b656; --s1:#4a8ad4; --s2:#c2742e; --s3:#3aa898; --s4:#9a7bd0;
+  --ok:#74d692; --ok-bg:#15301f; --warn:#f1c669; --warn-bg:#352b10; --bad:#ffa096; --bad-bg:#3b1b18;
+  --fase:#a8734f; --fase2:#4d5356; --fase3:#b9bec2; --neutro:#5aa9ea; --pe1:#57b852; --pe2:#e9d02b; --cu:#dd8f52; --al:#cfd5d8;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101216; --panel:#1a1d23; --ink:#eceef1; --mute:#9ba2ad; --line:#2d323b; --field:#13161b;
+  --accent:#9dbcec; --accent-ink:#0c1a30; --accent-soft:#222c3d; --sun:#f2b656; --s1:#4a8ad4; --s2:#c2742e; --s3:#3aa898; --s4:#9a7bd0;
+  --ok:#74d692; --ok-bg:#15301f; --warn:#f1c669; --warn-bg:#352b10; --bad:#ffa096; --bad-bg:#3b1b18;
+  --fase:#a8734f; --fase2:#4d5356; --fase3:#b9bec2; --neutro:#5aa9ea; --pe1:#57b852; --pe2:#e9d02b; --cu:#dd8f52; --al:#cfd5d8;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:400 15.5px/1.45 var(--f-ui);padding-inline:16px;padding-block:22px 56px}
+.wrap{max-width:1140px;margin-inline:auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;align-items:center;gap:12px}
+.ver{font:700 11px var(--f-ui);background:var(--accent-soft);color:var(--accent);padding:3px 8px;border-radius:99px;vertical-align:4px;margin-left:6px;letter-spacing:.03em}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+h1{font:700 24px/1.1 var(--f-ui);margin:0;letter-spacing:-.01em}
+header p{margin:2px 0 0;color:var(--mute);font-size:14px}
+.cols{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,10fr);gap:20px;align-items:start}
+.pasos{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.res{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px)}
+.paso{display:flex;align-items:center;gap:10px}
+.paso b{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 14px var(--f-ui);flex:none}
+h2{font:700 17px/1.2 var(--f-ui);margin:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:500;color:var(--mute);min-width:0}
+input,select{font:500 16px var(--f-ui);color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;width:100%;min-width:0}
+input[type=number]{font-family:var(--f-num);font-size:15px}
+input[readonly],select:disabled{opacity:.8;cursor:not-allowed;border-style:dashed}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+.chk{flex-direction:row;align-items:center;gap:9px;color:var(--ink);font-size:14.5px}
+.chk input{width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.seg button{font:600 15px var(--f-ui);padding:11px 10px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tipos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tipos button{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:12px 6px 10px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:12px;cursor:pointer;font:600 14px/1.2 var(--f-ui);min-width:0}
+.tipos button small{font:500 11.5px var(--f-ui);color:var(--mute)}
+.tipos button svg{width:30px;height:30px;color:var(--accent)}
+.tipos button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent)}
+details{border-top:1.5px solid var(--line);padding-top:12px}
+.card > details:first-child{border-top:0;padding-top:0}
+summary{cursor:pointer;font:600 15px var(--f-ui);color:var(--ink)}
+summary small{font-weight:400;color:var(--mute);margin-left:4px}
+details .grid{margin-top:12px}
+.hint{font-size:13px;color:var(--mute);margin:0}
+.nota{background:var(--accent-soft);color:var(--ink);padding:10px 12px;border-radius:10px;font-size:13.5px;margin:0}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tabs button{font:600 14.5px var(--f-ui);padding:10px 8px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;cursor:pointer;min-width:0}
+.tabs button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tabs button:disabled{opacity:.55;cursor:not-allowed}
+.tabs button small{display:block;font:500 11px var(--f-ui);opacity:.85}
+.nivel{border:1.5px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.nivel h3{font:700 15px var(--f-ui);margin:0;display:flex;align-items:center;gap:8px}
+.nivel h3 i{width:12px;height:12px;border-radius:3px;flex:none}
+.sub{font:700 11.5px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0}
+.flecha{align-self:center;color:var(--mute);font-size:13px}
+#out{display:flex;flex-direction:column;gap:14px}
+.estado{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;font:700 18px var(--f-ui)}
+.estado svg{width:26px;height:26px;flex:none}
+.estado.ok{background:var(--ok-bg);color:var(--ok)} .estado.bad{background:var(--bad-bg);color:var(--bad)} .estado.warn{background:var(--warn-bg);color:var(--warn)}
+.estado small{display:block;font:500 13px var(--f-ui);opacity:.95}
+.items{display:flex;flex-direction:column;margin:0;padding:0;list-style:none}
+.items li{padding:12px 0;border-top:1.5px solid var(--line);display:flex;flex-direction:column;gap:5px}
+.items li:first-child{border-top:0;padding-top:0}
+.items .cab{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-weight:700}
+.items p{margin:0;font-size:13.5px;color:var(--mute)}
+.pill{display:inline-block;font:700 11px var(--f-ui);padding:2px 8px;border-radius:99px}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.info{background:var(--accent-soft);color:var(--accent)}
+.etq{font:700 10.5px var(--f-ui);letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;border:1.5px solid var(--line);color:var(--mute)}
+.lobra input{max-width:420px}
+#lamina{display:flex;flex-direction:column;gap:8px}
+.lamw{overflow:auto;border:1.5px solid var(--line);border-radius:12px;max-height:70vh}
+.lamw img{display:block;width:100%;min-width:560px;height:auto}
+.tot{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;background:var(--field);border-radius:10px;padding:10px 12px;font-size:14px}
+.tot b{font:700 16px var(--f-num)} .tot small{flex-basis:100%;color:var(--mute);font-size:12.5px}
+.spd{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px 12px;margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.spd legend{font:700 12px var(--f-ui);letter-spacing:.05em;text-transform:uppercase;color:var(--mute);padding:0 6px}
+.chk{flex-direction:row !important;display:flex;align-items:flex-start;gap:10px;font-size:14.5px;font-weight:500;cursor:pointer}
+.chk input{flex:none;width:20px;height:20px;margin:1px 0 0;accent-color:var(--accent)}
+.aparato.tenue .mod{opacity:.45} .aparato.tenue .ficha b{color:var(--mute)}
+.apt small .etq{margin-left:6px;vertical-align:1px}
+.acc{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#resumen{width:100%;min-height:220px;font:500 12.5px/1.5 var(--f-num);background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+.etq.dest{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);margin-right:6px}
+.etq.obl{border-color:var(--accent);color:var(--accent)} .etq.prev{border-style:dashed}
+.arreglo{background:var(--field);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.arreglo b{font-size:14px}
+.btn{font:700 14px var(--f-ui);padding:9px 14px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer;align-self:flex-start}
+.btn.sec{background:var(--field);color:var(--ink);border:1.5px solid var(--line)}
+.graf{display:flex;flex-direction:column;gap:6px}
+.graf h3{font:700 15px var(--f-ui);margin:0}
+.graf svg{width:100%;height:auto;display:block;touch-action:pan-y}
+.graf svg text{font:500 11px var(--f-num);fill:var(--mute)}
+.graf svg .tit{font:600 11.5px var(--f-ui)}
+.ley{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
+.ley span{display:inline-flex;align-items:center;gap:6px}
+.ley i{width:14px;height:10px;border-radius:2px;flex:none}
+.lect{white-space:pre-wrap;font:500 12.5px/1.5 var(--f-num);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:3.4em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:500 13.5px var(--f-ui);padding:7px 11px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:99px;cursor:pointer;text-align:left}
+.chips button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.grupoC{padding-top:10px;border-top:1.5px solid var(--line)}
+.grupoC > .hint{margin:5px 0 7px}
+.grupoC summary{font-weight:500}
+.gcab b{font-size:14px;margin-right:8px}
+.tipoG{font:700 11px var(--f-num);background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:99px}
+.grupoC .hint{font-size:12.5px}
+.carril{overflow-x:auto;display:flex;justify-content:center}
+.carril svg{flex:none;height:auto;max-width:none}
+.mod text{font-family:var(--f-num);fill:var(--ink)}
+.mod .ts{font-weight:700;font-size:12.5px} .mod .tk{font-weight:700;font-size:12px} .mod .tt{font-weight:700;font-size:10px;fill:#3a2a00}
+.mod{width:50px;height:auto;flex:none;display:block} .mod.mg{width:33px}
+.apc{display:flex;align-items:center;gap:12px}
+.mods{display:flex;align-items:center;gap:4px;flex:none}
+.masm{font:700 13px var(--f-num);color:var(--mute);margin-left:2px}
+.apt{display:flex;flex-direction:column;gap:6px;min-width:0}
+@media (max-width:420px){.mod{width:42px} .mod.mg{width:28px} .apc{gap:10px} .apc.varios{flex-direction:column;align-items:flex-start}}
+.carril text{font-family:var(--f-num);fill:var(--ink)}
+.carril .ts{font-weight:700;font-size:12.5px} .carril .tk{font-weight:700;font-size:12px} .carril .tt{font-weight:700;font-size:10px;fill:#3a2a00}
+.carril .tc{font:600 10.5px var(--f-ui);fill:var(--mute)}
+.lmax{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.lmax .lt{color:var(--mute);font-size:12.5px}
+.lrow{display:flex;flex-wrap:wrap;gap:6px}
+.lrow span{font:500 13px var(--f-num);border:1.5px solid var(--line);border-radius:8px;padding:4px 9px}
+.lrow span.act{border-color:var(--accent);background:var(--accent-soft)}
+.veredicto{margin:0;padding:8px 10px;border-radius:8px;font-size:13.5px;font-weight:500}
+.veredicto.warn{background:var(--warn-bg);color:var(--warn)} .veredicto.ok{background:var(--ok-bg);color:var(--ok)} .veredicto.bad{background:var(--bad-bg);color:var(--bad)}
+.grupoC.lin{border-top:0;padding-top:0}
+.grupoC .grid{margin-top:8px}
+.acon{margin:0;font-size:13px;color:var(--mute)}
+.acon b{color:var(--ink)}
+.acon a{color:var(--accent);font-weight:600}
+.aparato .ref{border-top:1.5px solid var(--line);padding-top:8px}
+.aparato .ref table{min-width:0}
+.fuga{border-top:1.5px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.fuga p{margin:0;color:var(--mute)}
+.fcab{display:flex;justify-content:space-between;gap:10px;font-weight:600;font-size:13.5px}
+.fcab span:last-child{font-family:var(--f-num);font-size:12.5px}
+.fpista{position:relative;height:10px;border-radius:99px;background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.fpista i{position:absolute;left:0;top:0;bottom:0;border-radius:99px}
+.fpista .fmax{background:var(--ok);opacity:.45} .fpista .fmin{background:var(--ok)}
+.fuga.warn .fpista i{background:var(--sun)} .fuga.bad .fpista i{background:var(--bad)}
+.fuga p b{color:var(--ink)}
+.fpista b{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+.fpie{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mute)}
+.fpie span:first-child{margin-left:calc(60% - 9ch)}
+.fuga details{border-top:0;padding-top:0}
+.ref{border-top:0;padding-top:0}
+.ref .tabla{overflow-x:auto;margin-top:8px}
+.ref table{border-collapse:collapse;font-size:13px;width:100%;min-width:420px}
+.ref th,.ref td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.ref th{font-weight:700;color:var(--mute);font-size:12px}
+.ref td:nth-child(2){font-family:var(--f-num);font-size:12.5px}
+.ref td:nth-child(3){color:var(--mute)}
+.cuenta{font:700 11px var(--f-num);background:var(--accent);color:var(--accent-ink);padding:2px 7px;border-radius:99px;margin-left:6px}
+.puestas{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}
+.puestas li{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--accent-soft);border-radius:8px;padding:7px 8px 7px 11px;font-size:14px;font-weight:500}
+.puestas button{flex:none;width:30px;height:30px;border:1.5px solid var(--line);background:var(--panel);color:var(--mute);border-radius:8px;font:700 13px var(--f-ui);cursor:pointer}
+.grupoC select{font-size:14.5px;padding:8px 10px}
+.vacio{border:1.5px dashed var(--line);border-radius:12px;padding:22px 16px;display:flex;flex-direction:column;gap:6px;text-align:center;color:var(--mute);font-size:14px}
+.vacio b{color:var(--ink);font-size:15.5px}
+.esquema{display:flex;flex-direction:column;align-items:stretch}
+.red{align-self:center;font:700 11.5px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);border:1.5px dashed var(--line);border-radius:99px;padding:4px 14px}
+.hilo{align-self:center;width:2px;height:20px;background:var(--mute)}
+.cuadro{border:2px solid var(--accent);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.cuadro h3{font:700 12px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:0}
+.aparato{background:var(--field);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.aparato small{font-size:12.5px;color:var(--mute);font-weight:600}
+.ficha{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.ficha b{font:700 26px/1 var(--f-num);letter-spacing:-.02em}
+.ficha span{font:600 15px var(--f-ui)}
+.ficha span + span::before{content:"·";margin-right:12px;color:var(--mute)}
+.aparato details,.mas{border-top:1.5px solid var(--line);padding-top:8px}
+.aparato summary{font-size:13.5px;color:var(--mute)}
+.razones{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.razones li{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.mas > *{margin-top:10px}
+footer{color:var(--mute);font-size:12.5px}
+.inf{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);background:var(--field);color:var(--mute);font:italic 700 13px Georgia,serif;line-height:1;cursor:pointer;padding:0;position:relative}
+.inf::after{content:"";position:absolute;inset:-9px}
+.inf[aria-expanded=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.paso .inf{margin-left:auto}
+.gcab .inf{margin-left:8px;vertical-align:middle}
+.puestas li{flex-wrap:wrap}
+.puestas .nom{flex:1 1 9ch;min-width:0;overflow-wrap:anywhere}
+.cnt{flex:none;display:inline-flex;align-items:center;gap:4px}
+.cnt input{width:46px;height:30px;padding:2px 4px;text-align:center;font:600 14px var(--f-num);-moz-appearance:textfield;appearance:textfield}
+.cnt input::-webkit-outer-spin-button,.cnt input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cnt.kw input{width:60px}
+.cnt em{font:600 12.5px var(--f-ui);color:var(--mute);width:30px}
+.puestas .cnt button{color:var(--ink);font-size:16px}
+.afina > summary{font-size:14.5px}
+.afina > *:not(summary){margin-top:12px}
+.afina .nivel h3{font:700 12px var(--f-ui);letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin:0 0 6px}
+.ref .hint{margin-top:8px}
+.bloque{border:1.5px solid var(--line);border-radius:14px;padding:12px}
+.tit2{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.veredicto b{font-weight:700}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{font:500 13.5px var(--f-ui);padding:7px 12px;border-radius:99px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer}
+.tag b{font-weight:700;margin-right:4px}
+.tag[aria-expanded=true]{border-color:var(--accent);background:var(--accent-soft)}
+#out > .tip{margin-top:8px}
+#cargas .nivel{border:2px solid var(--accent);padding:0 12px 12px;overflow:hidden}
+#cargas .nv1{border-style:dashed}
+.banda{margin:0 -12px !important;padding:8px 12px;background:var(--accent);color:var(--accent-ink);justify-content:space-between;font:700 12.5px var(--f-ui) !important;letter-spacing:.06em;text-transform:uppercase}
+.nv1 .banda{background:var(--accent-soft);color:var(--accent)}
+.banda em{font:600 11.5px var(--f-ui);letter-spacing:0;text-transform:none;opacity:.85}
+#cargas .grupoC:first-of-type{border-top:0}
+.duo[hidden]{display:none}
+.p2{display:flex;flex-direction:column;gap:14px}
+.mapa .tit2{flex-wrap:wrap}
+.mapa .hint b{color:var(--ink)}
+.arbw{overflow-x:auto;padding:4px 2px 12px}
+.arb ul{list-style:none;margin:0;padding:0}
+.arb ul ul{margin-left:16px;padding-left:12px;border-left:2px solid var(--mute)}
+.arb li{padding-top:8px}
+.nw{position:relative;display:flex}
+.nodo{flex:1;min-width:0;display:flex;align-items:baseline;justify-content:space-between;gap:10px;text-align:left;padding:8px 70px 8px 10px;border:2px solid var(--line);border-left-width:6px;border-radius:10px;background:var(--field);color:var(--ink);cursor:pointer;font:inherit}
+.nodo .nn{display:flex;flex-direction:column;gap:1px;min-width:0}
+.nodo{display:grid !important;grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:2px;align-items:center}
+.ni{grid-row:1 / span 2;width:36px;height:36px;border-radius:9px;background:var(--panel);border:1.5px solid var(--line);display:grid;place-items:center}
+.ni svg{width:22px;height:22px;pointer-events:none}
+.k0 .ni{color:var(--s1)} .k1 .ni{color:var(--s2)} .k2 .ni{color:var(--s3)} .k3 .ni{color:var(--s4)}
+.nodo .nn{grid-column:2} .nodo .nd{grid-column:2}
+@media (max-width:759px){.nodo{flex-direction:column;align-items:flex-start !important;gap:2px !important} .arb ul ul > li::before{top:30px} #cargas .tabl .banda{flex-wrap:wrap;row-gap:4px} .ruta{flex-basis:100%}}
+.nin{width:100%;min-width:0;font:700 14px var(--f-ui);color:var(--ink);background:transparent;border:1.5px dashed transparent;border-radius:6px;padding:1px 4px;margin:-2px 0 0 -5px;height:auto;text-overflow:ellipsis}
+.nin::placeholder{color:var(--ink);opacity:1}
+.nin:hover{border-color:var(--line)} .nin:focus{border-style:solid;border-color:var(--accent);background:var(--panel);outline:0}
+.nodo small{font:500 11.5px var(--f-ui);color:var(--mute)}
+.nodo .nd{font:500 12px var(--f-num);color:var(--mute);white-space:nowrap}
+.qn{position:absolute;right:38px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:var(--panel);color:var(--mute);font:700 12px/1 var(--f-ui);cursor:pointer;padding:0}
+.qn::after{content:"";position:absolute;inset:-6px}
+.ruta{font:600 11.5px var(--f-ui);letter-spacing:0;text-transform:none;opacity:.75;margin-right:-4px}
+.arb ul ul > li{position:relative}
+.arb ul ul > li::before{content:"";position:absolute;left:-12px;top:28px;width:12px;border-top:2px solid var(--mute)}
+.nodo.k0{border-left-color:var(--s1)} .nodo.k1{border-left-color:var(--s2)} .nodo.k2{border-left-color:var(--s3)} .nodo.k3{border-left-color:var(--s4)}
+.nodo.on{border-top-color:var(--accent);border-right-color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-soft)}
+.mas{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font:700 16px/1 var(--f-ui);cursor:pointer;padding:0}
+.mas::after{content:"";position:absolute;inset:-8px}
+.lnom input{max-width:260px}
+@media (min-width:760px){
+  .arb{display:flex;justify-content:center;min-width:max-content}
+  .arb ul{display:flex;justify-content:center;position:relative}
+  .arb ul ul{margin:0;padding:18px 0 0;border-left:0}
+  .arb ul ul::before{content:"";position:absolute;top:0;left:50%;margin-left:-1px;border-left:2px solid var(--mute);height:18px}
+  .arb li{position:relative;padding:18px 7px 0;display:flex;flex-direction:column;align-items:center}
+  .arb ul ul > li::before,.arb li::before,.arb li::after{content:"";position:absolute;top:0;left:auto;right:50%;border-top:2px solid var(--mute);width:50%;height:18px}
+  .arb li::after{right:auto;left:50%;margin-left:-1px;border-left:2px solid var(--mute)}
+  .arb li:only-child::before,.arb li:only-child::after{display:none}
+  .arb li:only-child{padding-top:0}
+  .arb li:first-child::before,.arb li:last-child::after{border:0 none}
+  .arb li:last-child::before{border-right:2px solid var(--mute);border-radius:0 6px 0 0}
+  .arb li:first-child::after{border-radius:6px 0 0 0}
+  .nodo{flex:none;width:186px;flex-direction:column;align-items:flex-start;gap:3px;padding:9px 10px;border-left-width:2px;border-top-width:6px}
+  .nodo.k0{border-left-color:var(--line);border-top-color:var(--s1)} .nodo.k1{border-left-color:var(--line);border-top-color:var(--s2)} .nodo.k2{border-left-color:var(--line);border-top-color:var(--s3)} .nodo.k3{border-left-color:var(--line);border-top-color:var(--s4)}
+  .nodo.on{border-left-color:var(--accent);border-right-color:var(--accent);border-bottom-color:var(--accent)}
+  .nodo.on.k0{border-top-color:var(--s1)} .nodo.on.k1{border-top-color:var(--s2)} .nodo.on.k2{border-top-color:var(--s3)} .nodo.on.k3{border-top-color:var(--s4)}
+  .mas{right:-9px;top:auto;bottom:-9px;transform:none;width:24px;height:24px}
+  .qn{right:-9px;top:-3px;transform:none;width:22px;height:22px}
+  .nodo{padding-right:10px}
+}
+#cargas .tabl .banda{justify-content:flex-start}
+.pliega{flex:none;width:26px;height:26px;border:0;border-radius:6px;background:transparent;color:inherit;font-size:15px;cursor:pointer;padding:0;margin-left:-6px}
+.rsm{margin:0;padding:8px 16px 10px;font:500 13px var(--f-num);color:var(--mute)}
+.subs .subs{margin-left:10px;padding-left:12px}
+.flujo{display:flex;flex-direction:column;gap:14px}
+#cargas{display:flex;flex-direction:column}
+#cargas .tabl{padding:0;gap:0;overflow:hidden;border:2px solid var(--accent)}
+#cargas .tabl .banda{margin:0 !important;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.cuelga,.pone{padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pone{border-left:1.5px solid var(--line)}
+.cuelga .tit2{justify-content:flex-start}
+#out{display:flex;flex-direction:column;gap:12px}
+#lugarSeg button{display:flex;flex-direction:column;align-items:center;gap:6px;line-height:1.15}
+#lugarSeg svg{width:26px;height:26px;pointer-events:none}
+.gcols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start}
+.gcols #gd{grid-column:1;grid-row:1}
+.glado{grid-column:2;display:flex;flex-direction:column;gap:10px}
+.glado .ley{flex-direction:column;gap:6px}
+@media (max-width:880px){.gcols{display:flex;flex-direction:column;gap:8px} .glado{display:contents} .gcols #gd{order:2} .gcols .lect{order:3}}
+#out .tags,#out > .tip{margin-top:0}
+.p3{display:flex;flex-direction:column;gap:14px;border-top:1.5px solid var(--line);padding-top:14px}
+@media (max-width:880px){.duo{grid-template-columns:minmax(0,1fr)} .pone{border-left:0;border-top:1.5px solid var(--line)}}
+.subs{margin-left:16px;padding:14px 0 0 16px;border-left:2px solid var(--mute);display:flex;flex-direction:column;gap:14px}
+.subs.sin{margin-left:0;padding-left:0;border-left:0}
+.mas-sub{align-self:flex-start;border-style:dashed !important}
+.qsub{margin-left:auto;font:600 12px var(--f-ui);padding:4px 10px;border-radius:99px;border:1.5px solid currentColor;background:transparent;color:inherit;cursor:pointer;text-transform:none;letter-spacing:0}
+.lcirc input{max-width:120px}
+.grupoC.afina summary{font-size:14px}
+@media (max-width:880px){.subs{margin-left:6px;padding-left:8px}}
+@media (max-width:420px){.cuelga,.pone{padding:12px}}
+@media (max-width:420px){.card{padding:14px} .cuadro{padding:10px} .ficha b{font-size:23px} .grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:880px){.cols{grid-template-columns:minmax(0,1fr)} .res{position:static}}
+</style>
+</head>
+<body style="margin:0">
+
+
+<div class="wrap">
+<header>
+  <div class="logo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6m0 6v6M18 3v4m0 10v4"/><path d="M6 9l5 6"/><rect x="14" y="7" width="8" height="10" rx="2"/></svg></div>
+  <div><h1>Asesor de protecciones REBT <span class="ver">Beta 1</span></h1><p>Diferenciales y magnetotérmicos recomendados para cada cuadro y subcuadro</p></div>
+</header>
+<div class="flujo">
+<section class="card" aria-label="La instalación">
+  <div class="paso"><b>1</b><h2>Cómo es la instalación</h2></div>
+  <div class="seg" id="lugarSeg" role="group" aria-label="Tipo de instalación" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <button type="button" data-v="viv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M12 20v-5m-2-2h4v-2h-4z"/></svg>Vivienda</button><button type="button" data-v="ter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V5l7-2 7 2v16"/><path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1"/></svg>Local o terciario</button><button type="button" data-v="ind"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V10l6 3V10l6 3V4h4v17z"/><path d="M8 17h2m3 0h2"/></svg>Industria</button>
+  </div>
+  <p class="nota" id="lugarInfo" hidden></p>
+  <fieldset id="spdBox" class="spd" hidden><legend>Riesgo de sobretensiones</legend>
+    <label class="chk"><input type="checkbox" id="spAerea"><span>La alimentación es aérea, en todo o en parte</span></label>
+    <label class="chk"><input type="checkbox" id="spCrit"><span>Un fallo afectaría a personas, animales, un servicio público o un proceso que no se puede parar</span></label>
+    <div class="grid"><label>Pararrayos<select id="spRayo"><option value="no">No hay</option><option value="edif">En el mismo edificio</option><option value="cerca">A menos de 50 m</option></select></label>
+    <label>Días de tormenta al año<select id="spTorm"><option value="">Sin indicar</option><option value="0">Menos de 20</option><option value="20">20 o más</option><option value="25">25 o más (toda Cataluña)</option></select></label></div>
+  </fieldset>
+  <div><p id="lCirc" class="tot" hidden><span>Circuitos de la vivienda, en total</span><b id="ncirc">5 circuitos</b><small>Suma de los cuadros. Se cambian en cada cuadro.</small></p>
+</div>
+</section>
+<div id="paso2" class="p2" hidden><section id="mapa" class="card mapa" aria-label="Mapa de la instalación" hidden></section><div id="cargas"></div></div>
+<section class="card" id="res" aria-label="Toda la instalación"><div id="out" aria-live="polite"></div>
+  <div id="paso3" class="p3" hidden>
+  <label class="lobra">Nombre de la obra <small style="color:var(--mute);font-weight:400">opcional, sale en el esquema</small><input type="text" id="obra" maxlength="60" placeholder="sin indicar"></label>
+  <div class="acc"><button class="btn" id="descargar" type="button">Descargar esquema</button><button class="btn sec" id="copiar" type="button">Copiar resumen</button><button class="btn sec" id="reset" type="button">Vaciar todo</button><span id="copiado" class="hint" role="status"></span></div>
+  <textarea id="resumen" readonly hidden aria-label="Resumen"></textarea>
+  <div id="lamina" hidden><p class="hint">Si no se ha descargado sola, mantén pulsada la imagen (o botón derecho) y guárdala.</p><div class="lamw"><img id="lamImg" alt="Esquema de protecciones de la instalación"></div></div>
+  </div>
+</section>
+</div>
+<footer>Beta 1 · 11-10-2026. Orientativo. Base: REBT (texto consolidado a 3-9-2025), guías técnicas BT-22, BT-23, BT-24, BT-25 y BT-26 y tiempos normalizados de la UNE-EN 61008. Fugas típicas y usos de cada tipo de diferencial de la guía BT-24 y del manual de diferenciales de APIEM (2022). Cascada por niveles: retardos y tiempos de corte del catálogo ComPacT NSX de Schneider, y máximo de 1 s de la UNE-HD 60364-4-41. Solo esquema TT. El tipo mínimo sale del reglamento y de la guía BT-24; el aconsejado, del catálogo de un fabricante, y depende de la electrónica de cada aparato.</footer>
+</div>
+<template id="refT"><details class="ref"><summary>Tabla de fugas de referencia</summary>
+    <div class="tabla"><table>
+      <thead><tr><th>Receptor</th><th>Fuga a 50 Hz</th><th>Fuente</th></tr></thead>
+      <tbody>
+        <tr><td>Puesto informático (CPU, pantalla, router)</td><td>0,5 a 2 mA</td><td>Guía BT-24 y APIEM</td></tr>
+        <tr><td>Impresora, fotocopiadora, fax</td><td>hasta 1,5 mA</td><td>APIEM</td></tr>
+        <tr><td>Autómata, pantalla o switch industrial</td><td>hasta 2 mA</td><td>APIEM</td></tr>
+        <tr><td>Electrodoméstico de menos de 1 kW</td><td>0,5 a 0,75 mA</td><td>Guía BT-24 y APIEM</td></tr>
+        <tr><td>Electrodoméstico de más de 1 kW</td><td>1 a 3,5 mA</td><td>Guía BT-24 y APIEM</td></tr>
+        <tr><td>Climatización</td><td>hasta 2 mA por kW</td><td>Guía BT-24 y APIEM</td></tr>
+        <tr><td>Suelo térmico</td><td>1 mA por kW</td><td>APIEM</td></tr>
+        <tr><td>Balasto electrónico</td><td>hasta 0,5 mA</td><td>APIEM</td></tr>
+        <tr><td>Lámpara LED</td><td>hasta 0,4 mA</td><td>APIEM</td></tr>
+        <tr><td>Cable</td><td>1,5 mA por cada 100 m</td><td>APIEM</td></tr>
+        <tr><td>Variadores y rectificadores</td><td>alta frecuencia, hasta el 5 % de su intensidad; no se suma aquí</td><td>Guía BT-24</td></tr>
+        <tr><td>Recarga de vehículo, SAI, inversor</td><td>sin dato general: ficha del fabricante</td><td></td></tr>
+      </tbody></table></div>
+    <p class="hint">Guía BT-24, anexo III (Ministerio, 2019) y manual de diferenciales de APIEM (2022).</p>
+  </details>
+  <details class="ref"><summary>Cómo se calcula</summary>
+    <p class="hint">Cada aparato deriva a tierra una pequeña corriente aunque no tenga avería. Si la suma bajo un diferencial es alta, salta sin motivo. Se suma lo que has añadido en cada cuadro como caso más desfavorable: todo conectado y con tensión a la vez.</p>
+    <p class="hint"><b>Metros de cable:</b> unos 1,5 mA por cada 100 m. Suma la longitud de todos los circuitos del cuadro: cinco circuitos de 20 m son 100 m.</p>
+    <p class="hint"><b>Otros receptores:</b> los que no están en las listas de los cuadros. Mira su fuga en la ficha del fabricante y escribe la suma.</p>
+  </details></template>
+<script>
+/* Núcleo: reglas y curvas. Sin DOM, se prueba con Node. */
+const P = (() => {
+  const SENS = [10, 30, 100, 300, 500, 1000];            // mA
+  const CAL = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125];
+  const MAG = {B: [3, 5], C: [5, 10], D: [10, 20]};       // guía BT-22 y UNE-EN 60898
+  const fN = (x, d = 0) => x.toLocaleString("es-ES", {minimumFractionDigits: d, maximumFractionDigits: d});
+  const fI = mA => mA >= 1000 ? fN(mA / 1000, mA % 1000 ? 1 : 0) + " A" : fN(mA) + " mA";
+  const fT = s => s >= 3600 ? fN(s / 3600, 0) + " h" : s >= 60 ? fN(s / 60, 0) + " min" : s >= 1 ? fN(s, s < 10 ? 1 : 0) + " s" : fN(s, 2) + " s";
+
+  /* Diferencial: tiempos normalizados (UNE-EN 61008/61009). k = fuga / sensibilidad.
+     hi = tiempo máximo de corte; lo = tiempo mínimo de no respuesta. Escalones del lado seguro. */
+  function difBanda(d, mA) {
+    const k = mA / d.sens;
+    if (k < 0.5) return null;                              // por debajo de IΔn/2 no dispara
+    if (d.ret === "R") return {lo: d.dt / 1000, hi: k < 1 ? Infinity : d.corte / 1000};   // retardo regulable: no dispara antes de Δt y corta en menos del tiempo de catálogo
+    if (d.ret === "S") return {lo: k < 1 ? 0.13 : k < 2 ? 0.06 : k < 5 ? 0.05 : 0.04, hi: k < 1 ? Infinity : k < 2 ? 0.5 : k < 5 ? 0.2 : 0.15};
+    return {lo: 0, hi: k < 1 ? Infinity : k < 2 ? 0.3 : k < 5 ? 0.15 : 0.04};   // general; 0,15 s a 2·IΔn según la guía BT-24
+  }
+  // tramos de fuga en los que el de aguas arriba puede disparar antes de que el de aguas abajo haya cortado seguro
+  function difSolape(up, dn) {
+    const r = []; let ini = null, prev = null;
+    for (let e = 0; e <= 600; e++) {
+      const mA = Math.pow(10, e / 100);                    // 1 mA a 1000 A
+      const a = difBanda(up, mA), b = difBanda(dn, mA);
+      const mal = !!a && (!b || b.hi > a.lo + 1e-9);
+      if (mal && ini == null) ini = mA;
+      if (!mal && ini != null) { r.push([ini, prev]); ini = null; }
+      prev = mA;
+    }
+    if (ini != null) r.push([ini, prev]);
+    return r;
+  }
+
+  /* Magnetotérmico (UNE-EN 60898). x = I / In. Puntos de norma: 1,13 In (1 h, no dispara), 1,45 In (1 h, dispara),
+     2,55 In (entre 1 s y 60 o 120 s) y los márgenes magnéticos. Entre puntos, trazado interpolado. */
+  const ll = (x, x1, y1, x2, y2) => Math.exp(Math.log(y1) + (Math.log(x) - Math.log(x1)) * (Math.log(y2) - Math.log(y1)) / (Math.log(x2) - Math.log(x1)));
+  function magBanda(m, A) {
+    const x = A / m.In, [kl, kh] = MAG[m.curva], T = m.In <= 32 ? 60 : 120;
+    if (x < 1.13) return null;
+    const lo = x < 2.55 ? ll(x, 1.13, 3600, 2.55, 1) : x < kl ? Math.max(0.1, Math.pow(2.55 / x, 2)) : 0;
+    const hi = x < 1.45 ? Infinity : x < 2.55 ? ll(x, 1.45, 3600, 2.55, T) : x < kh ? Math.max(0.1, T * Math.pow(2.55 / x, 2)) : 0.1;
+    return {lo, hi};
+  }
+  // primera intensidad a partir de la cual el de aguas arriba puede disparar antes de que el de aguas abajo haya cortado seguro
+  function magSolape(up, dn) {
+    for (let e = 0; e <= 500; e++) {
+      const A = Math.pow(10, e / 100);
+      const a = magBanda(up, A), b = magBanda(dn, A);
+      if (a && (!b || b.hi > a.lo + 1e-9)) return A;
+    }
+    return null;
+  }
+
+  const NOMBRE = ["Cuadro general", "Subcuadro", "Circuito o receptor"];
+  function analiza(c) {
+    const niv = c.niveles.slice(0, c.n).map((x, i) => Object.assign({i, nombre: NOMBRE[i]}, x));
+    const items = [], dif = niv.filter(x => x.dif);
+    const resid = c.lugar !== "ind";
+    // datos imposibles
+    dif.forEach(d => { if (d.ret === "S" && d.sens <= 30) items.push({est: "bad", tit: d.nombre + ": no existen diferenciales selectivos de " + d.sens + " mA", txt: "El tipo S solo se fabrica para sensibilidades de más de 30 mA y desde 25 A. Elige 100, 300 o 500 mA.", etq: "obl", cita: "UNE-EN 61008"}); });
+    // selectividad entre diferenciales en serie
+    const pares = [];
+    for (let i = 0; i + 1 < dif.length; i++) {
+      const up = dif[i], dn = dif[i + 1], ratio = up.sens / dn.sens;
+      let est, porque, arreglo = null;
+      const minS = SENS.find(s => s >= 3 * dn.sens && s > 30);
+      if (up.ret === "R") { est = dn.ret !== "R" && ratio >= 3 ? "warn" : "bad"; porque = est === "warn" ? "posible con un relé de retardo regulable, si su tiempo de no actuación supera el tiempo de corte del de aguas abajo (0,5 s para un tipo S) sin pasar de 1 s. Compruébalo con el fabricante" : dn.ret === "R" ? "los dos son de retardo regulable: hay que escalonar los tiempos con los datos del fabricante" : "la sensibilidad de aguas arriba no llega al triple de la de aguas abajo"; }
+      else if (up.ret === "I") { est = "bad"; porque = "el de aguas arriba es instantáneo, así que puede saltar a la vez que el de aguas abajo"; }
+      else if (dn.ret !== "I") { est = "bad"; porque = dn.ret === "S" ? "los dos son selectivos, con los mismos tiempos: no hay escalón entre ellos" : "el de aguas abajo tiene más retardo que el de aguas arriba"; }
+      else if (ratio < 3) { est = "bad"; porque = "la sensibilidad de aguas arriba (" + fI(up.sens) + ") no llega al triple de la de aguas abajo (" + fI(dn.sens) + ")"; }
+      else { est = "ok"; porque = "el de aguas arriba es selectivo y su sensibilidad es " + fN(ratio, ratio % 1 ? 1 : 0) + " veces la de aguas abajo"; }
+      if (est === "bad" && dn.ret === "I" && minS) arreglo = {nivel: up.i, sens: Math.max(minS, 300), minS, par: [up.i, dn.i], mismo: up.sens === dn.sens};
+      const sol = est === "ok" ? difSolape(up, dn) : [];
+      pares.push({up, dn, est, porque, arreglo, sol});
+      items.push({est, tit: up.nombre + " y " + dn.nombre.toLowerCase() + ": " + (est === "ok" ? "selectivos" : est === "warn" ? "selectividad por comprobar" : "no selectivos"),
+        txt: (est === "ok" ? "Cumple: " : est === "warn" ? "Es " : "Motivo: ") + porque + ".", etq: "obl", cita: "ITC-BT-17; condiciones de la guía BT-25, ap. 2.1", arreglo, par: pares.length - 1});
+      if (sol.length) items.push({est: "info", tit: "Margen justo con los tiempos máximos de la norma", txt: "Con los tiempos máximos normalizados, entre " + sol.map(r => fI(r[0]) + " y " + fI(r[1])).join(", y entre ") + " de fuga el de aguas arriba podría responder antes de que el de aguas abajo haya cortado. Los diferenciales reales cortan mucho antes (unos 20 ms según fabricante), pero con 300 mA arriba ese roce desaparece.", etq: "rec", cita: "UNE-EN 61008; catálogo de fabricante"});
+    }
+    if (dif.length < 2) items.push({est: "info", tit: "No hay diferenciales en serie", txt: dif.length ? "Solo hay un nivel con diferencial, así que no hay selectividad que comprobar entre diferenciales." : "No has marcado ningún diferencial.", etq: "inf", cita: ""});
+    // vivienda: 30 mA en todos los circuitos
+    if (c.lugar === "viv") {
+      const ult = niv[niv.length - 1], ultDif = dif[dif.length - 1];
+      if (!ultDif) items.push({est: "bad", tit: "Vivienda sin diferencial", txt: "Todos los circuitos de una vivienda deben quedar protegidos por un diferencial de 30 mA como máximo.", etq: "obl", cita: "ITC-BT-25, ap. 2.1"});
+      else if (ultDif.sens > 30) items.push({est: "bad", tit: "Los circuitos no quedan protegidos a 30 mA", txt: "El último diferencial antes de los circuitos es de " + fI(ultDif.sens) + ". En vivienda todos los circuitos deben quedar protegidos a 30 mA como máximo; aguas arriba puede haber otros de más sensibilidad en serie.", etq: "obl", cita: "ITC-BT-25, ap. 2.1"});
+      else if (ultDif.i !== ult.i) items.push({est: "info", tit: "Protección a 30 mA desde " + ultDif.nombre.toLowerCase(), txt: "Los circuitos quedan protegidos por el diferencial de " + fI(ultDif.sens) + " de " + ultDif.nombre.toLowerCase() + ".", etq: "obl", cita: "ITC-BT-25, ap. 2.1"});
+      if (dif.length === 1 && dif[0].ret !== "I") items.push({est: "warn", tit: "Un único diferencial debe ser instantáneo", txt: "En una instalación con un solo diferencial, este debe ser de disparo instantáneo.", etq: "rec", cita: "Guía BT-25, ap. 2.1"});
+    }
+    // tipo AC
+    const ac = dif.filter(d => d.tipo === "AC");
+    if (ac.length && resid) items.push({est: "warn", tit: "Diferencial tipo AC en " + ac.map(d => d.nombre.toLowerCase()).join(" y "), txt: "Hoy sigue siendo reglamentario, pero el proyecto de modificación del REBT prevé prohibir instalar tipo AC nuevos en uso doméstico, residencial y terciario, con dos años de moratoria. Con LED, electrónica o recarga de vehículo conviene tipo A como mínimo.", etq: "prev", cita: "Proyecto de modificación de la ITC-BT-17, sin publicar en el BOE"});
+    // protector contra sobretensiones
+    const cab = dif[0];
+    if (c.spd === "abajo" && cab && cab.ret === "I") items.push({est: "bad", tit: "Protector contra sobretensiones aguas abajo de un diferencial instantáneo", txt: "Al actuar, el protector deriva corriente a tierra y hace saltar el diferencial. O se pasa aguas arriba, entre el interruptor general y el diferencial, o el diferencial de cabecera debe ser selectivo (tipo S) o retardado.", etq: "rec", cita: "Guía BT-24, anexo III.4; guía BT-25, ap. 2.1"});
+    else if (c.spd !== "no") items.push({est: "ok", tit: "Posición del protector contra sobretensiones correcta", txt: c.spd === "arriba" ? "Está aguas arriba del diferencial, que es la posición recomendada." : "Está aguas abajo, pero el diferencial de cabecera es selectivo o retardado.", etq: "rec", cita: "Guía BT-24, anexo III.4"});
+    else items.push({est: "info", tit: "Sin protector contra sobretensiones", txt: "Hoy solo es obligatorio en los casos de la ITC-BT-23. El proyecto de modificación del REBT prevé hacerlo obligatorio en todas las instalaciones nuevas.", etq: "prev", cita: "Proyecto de modificación de la ITC-BT-17, sin publicar en el BOE"});
+    // magnetotérmicos
+    const mags = [];
+    for (let i = 0; i + 1 < niv.length; i++) {
+      const up = niv[i], dn = niv[i + 1], A = magSolape(up, dn);
+      const magUp = MAG[up.curva][0] * up.In, magDn = MAG[dn.curva][1] * dn.In;
+      let est = "info", txt;
+      if (up.In <= dn.In) { est = "warn"; txt = "El de aguas arriba (" + up.In + " A) no es mayor que el de aguas abajo (" + dn.In + " A): ante una sobrecarga puede saltar cualquiera de los dos."; }
+      else txt = "Hasta " + fN(magUp) + " A de defecto solo dispara al instante el de aguas abajo" + (magDn < magUp ? " (seguro desde " + fN(magDn) + " A)" : "") + ". Por encima de " + fN(magUp) + " A el de aguas arriba (" + up.In + " A curva " + up.curva + ") también puede disparar al instante." + (A != null && A < magUp - 1e-6 ? " En sobrecarga, las bandas de la norma se solapan desde unos " + fN(A) + " A; esas bandas cubren a todos los fabricantes, así que es un margen a comprobar y no un fallo seguro." : "");
+      mags.push({up, dn, A, magUp, magDn, est});
+      items.push({est, tit: "Magnetotérmicos de " + up.nombre.toLowerCase() + " y " + dn.nombre.toLowerCase(), txt: txt + " Orientativo: la selectividad real en cortocircuito depende de las tablas de cada fabricante.", etq: "tec", cita: "Bandas de la UNE-EN 60898; guía BT-22"});
+    }
+    const malos = items.filter(x => x.est === "bad").length, dudas = items.filter(x => x.est === "warn").length;
+    return {niv, dif, pares, mags, items, malos, dudas};
+  }
+
+  /* Asesor: qué diferencial poner en cada cuadro. */
+  const ORD = ["AC", "A", "F", "B"];
+  // per: lo usan o tocan personas (tomas, alumbrado...). fijo: receptor fijo industrial. sens/obl: sensibilidad u obligación propia.
+  // t: tipo mínimo, con su fuente f. ta: tipo aconsejado y fa: cuándo y según quién.
+  const HAG = "catálogo de fabricante", AP_ = "manual de APIEM (2022)";
+  const CARGAS = [
+    {id: "resis", fu: [1, 3.5], fuU: "ud", fuN: "aparatos", fuF: "guía BT-24, anexo III", cv: "B", g: "ac", n: "Termo, horno y otras resistencias", t: "AC", per: 1, f: HAG},
+    {id: "calefel", fu: [1, 3.5], fuU: "ud", fuN: "aparatos", fuF: "guía BT-24, anexo III", cv: "B", g: "ac", n: "Calefacción eléctrica: radiadores, acumuladores", t: "AC", per: 1, f: HAG + ": calefacción eléctrica"},
+    {id: "motor", cv: "D", g: "ac", n: "Motores directos, sin electrónica", t: "AC", fijo: 1, f: HAG + ": cargas inductivas sin componentes electrónicos"},
+    {id: "tomas", cv: "C", g: "a", n: "Tomas de uso general", t: "A", per: 1, f: "presentación de Schneider para el COGITI (2026): tomas de uso general"},
+    {id: "led", fu: [0, 0.4], fuU: "ud", fuN: "lámparas", fuF: "manual de APIEM (2022)", cv: "C", g: "a", n: "Alumbrado LED", t: "A", per: 1, f: HAG},
+    {id: "info", fu: [0.5, 2], fuU: "ud", fuN: "equipos", fuF: "guía BT-24, anexo III", cv: "C", g: "a", n: "Informática y electrónica", t: "A", per: 1, f: HAG},
+    {id: "induc", fu: [1, 3.5], fuU: "ud", fuN: "aparatos", fuF: "guía BT-24, anexo III", cv: "C", g: "a", n: "Cocina de inducción", t: "A", si: 1, per: 1, f: HAG},
+    {id: "impres", cv: "C", g: "a", n: "Impresoras y fotocopiadoras", t: "A", per: 1, fu: [0, 1.5], fuU: "ud", fuN: "equipos", fuF: "manual de APIEM (2022)", f: "manual de APIEM (2022): receptores con fuente de alimentación"},
+    {id: "peq", cv: "C", g: "a", n: "Electrodomésticos pequeños, de menos de 1 kW", t: "A", per: 1, fu: [0.5, 0.75], fuU: "ud", fuN: "aparatos", fuF: "guía BT-24, anexo III", f: "manual de APIEM (2022): receptores con fuente de alimentación"},
+    {id: "balas", cv: "C", g: "a", n: "Alumbrado con balasto electrónico", t: "A", per: 1, fu: [0, 0.5], fuU: "ud", fuN: "balastos", fuF: "manual de APIEM (2022)", f: HAG},
+    {id: "autom", cv: "C", g: "a", n: "Autómatas y equipos de control industrial", t: "A", fijo: 1, fu: [0, 2], fuU: "ud", fuN: "equipos", fuF: "manual de APIEM (2022)", f: "manual de APIEM (2022): automatización industrial"},
+    {id: "arranc", cv: "C", g: "a", n: "Arrancadores o reguladores por control de fase", t: "AC", fijo: 1, f: "guía BT-24, anexo IV, y manual de APIEM (2022): el control de fase admite tipo AC"},
+    {id: "electro", fu: [1, 3.5], fuU: "ud", fuN: "aparatos", fuF: "guía BT-24, anexo III", cv: "C", g: "f", n: "Lavadora, lavavajillas, secadora", t: "A", si: 1, ta: "F", fa: "o tipo A superinmunizado, si el motor es inverter", ff: HAG + "; manual de APIEM (2022)", per: 1, f: "guía BT-24, anexo IV: rectificación monofásica"},
+    {id: "clima", fu: [0, 2], fuU: "kW", fuN: "kW", fuF: "guía BT-24, anexo III", cv: "C", g: "f", n: "Aire acondicionado o bomba de calor", t: "A", si: 1, ta: "F", fa: "o tipo A superinmunizado, si es inverter", ff: HAG + "; manual de APIEM (2022)", per: 1, f: "guía BT-24, anexo IV: rectificación monofásica"},
+    {id: "var1", cv: "C", g: "f", n: "Variador de frecuencia monofásico", t: "A", ta: "F", fa: "o tipo A superinmunizado", ff: "guía BT-24, anexo I.3; manual de APIEM (2022)", si: 1, fijo: 1, f: "guía BT-24, anexo IV: rectificación monofásica"},
+    {id: "var3", cv: "C", g: "b", n: "Variador de frecuencia trifásico", t: "B", fijo: 1, f: "guía BT-24, anexo IV: puente de seis pulsos"},
+    {id: "rect", cv: "D", g: "b", n: "Rectificadores trifásicos", t: "B", fijo: 1, f: "guía BT-24, anexo IV: puentes trifásicos"},
+    {id: "asc", cv: "D", g: "b", n: "Ascensores, grúas y puentes rodantes", t: "A", ta: "B", fa: "si llevan variador trifásico, como casi todos los actuales", ff: HAG + "; manual de APIEM (2022)", fijo: 1, f: "criterio prudente"},
+    {id: "sai", cv: "C", g: "b", n: "SAI", t: "A", ta: "B", fa: "si es trifásico", ff: HAG, fijo: 1, f: "presentación de Schneider para el COGITI (2026): SAI monofásicos"},
+    {id: "ve", cv: "C", g: "n", n: "Recarga de vehículo eléctrico", t: "A", ta: "B", fa: "si el punto de recarga no vigila por sí mismo la fuga de corriente continua (6 mA)", ff: "UNE-HD 60364-7-722 y fabricantes, según el manual de APIEM (2022)", per: 1, sens: 30, obl: "ITC-BT-52: 30 mA y clase A por punto de recarga", f: "ITC-BT-52"},
+    {id: "fv", cv: "C", g: "n", n: "Fotovoltaica o inversor", t: "A", ta: "B", fa: "salvo que el fabricante del inversor indique que no lo necesita o haya transformador separador", ff: "UNE-HD 60364-7-712, según el manual de APIEM (2022)", per: 1, sens: 30, soloRes: 1, obl: "ITC-BT-40: tipo A en circuito dedicado, de 30 mA en vivienda o zona con público", f: "ITC-BT-40"},
+    {id: "calef", fu: [1, 1], fuU: "kW", fuN: "kW", fuF: "manual de APIEM (2022)", cv: "B", g: "n", n: "Cables calefactores o folio radiante", t: "AC", per: 1, sens: 30, obl: "ITC-BT-46: 30 mA por cada circuito", f: HAG + ": calefacción eléctrica"},
+    {id: "ext", fu: [0, 0.4], fuU: "ud", fuN: "lámparas", fuF: "manual de APIEM (2022)", cv: "C", g: "n", n: "Alumbrado exterior", t: "A", fijo: 1, sens: 300, obl: "ITC-BT-09: 300 mA como máximo", f: HAG + ": iluminación LED"},
+    {id: "med", cv: "C", g: "n", n: "Equipos médicos sin transformador de aislamiento", t: "A", ta: "B", fa: "según el equipo", ff: HAG, per: 1, sens: 30, obl: "ITC-BT-38: 30 mA y clase A", f: "ITC-BT-38"}
+  ];
+  const GRUPOS = [
+    {id: "ac", n: "Sin electrónica", d: "Resistencias y motores conectados directamente. La fuga es alterna pura.", t: "AC"},
+    {id: "a", n: "Con electrónica sencilla", d: "Fuentes de alimentación y reguladores. La fuga puede llevar corriente continua pulsante.", t: "A"},
+    {id: "f", n: "Con motor inverter o variador monofásico", d: "Motores de velocidad variable alimentados entre fase y neutro. Si son inverter, la fuga mezcla varias frecuencias.", t: "A o F"},
+    {id: "b", n: "Con electrónica trifásica o corriente continua", d: "Variadores trifásicos, rectificadores y onduladores. La fuga puede ser continua alisada.", t: "hasta B"},
+    {id: "n", n: "Con norma propia", d: "Receptores a los que una instrucción del reglamento fija el diferencial.", t: ""}
+  ];
+  const tMax = (a, b) => ORD.indexOf(a) >= ORD.indexOf(b) ? a : b;
+  // diferencial que protege directamente a unos circuitos
+  function final(lugar, ids) {
+    const cs = CARGAS.filter(c => ids.includes(c.id)), R = [];
+    let tipo = cs.reduce((t, c) => tMax(t, c.t), "AC"), manda = cs.filter(c => c.t === tipo && tipo !== "AC");
+    if (!cs.length) { tipo = "A"; R.push({e: "rec", t: "Tipo A: sin saber qué cuelga, es el mínimo prudente."}); }
+    else if (tipo === "AC" && lugar !== "ind") { tipo = "A"; R.push({e: "prev", t: "Tipo A: estas cargas admitirían tipo AC, pero el proyecto de modificación del REBT prevé prohibirlo en instalaciones nuevas domésticas y terciarias."}); }
+    else if (tipo === "AC") R.push({e: "rec", t: "Tipo AC: basta para cargas sin electrónica. En industria seguirá permitido."});
+    else R.push({e: cs.some(c => c.obl && c.t === tipo && /ITC/.test(c.f)) ? "obl" : "rec", t: "Tipo " + tipo + " como mínimo por: " + manda.map(c => c.n.toLowerCase() + " (" + c.f + ")").join("; ") + "."});
+    const acon = cs.filter(c => c.ta && ORD.indexOf(c.ta) > ORD.indexOf(tipo));
+    let ta = null;
+    acon.forEach(c => { ta = ta ? tMax(ta, c.ta) : c.ta; R.push({e: "rec", t: "Tipo " + c.ta + " aconsejado para " + c.n.toLowerCase() + ", " + c.fa + " (" + c.ff + ")."}); });
+    const sis = cs.filter(c => c.si);
+    if (sis.length) R.push({e: "rec", t: "Inmunidad reforzada (superinmunizado, tipo A-SI o A HI) aconsejada por los filtros de: " + sis.map(c => c.n.toLowerCase()).join("; ") + ". Evita disparos sin defecto (" + AP_ + ")."});
+    if (acon.length && cs.length > acon.length) R.push({e: "tec", t: "Para no subir todo el diferencial, puedes poner uno propio del tipo aconsejado solo para esos circuitos y dejar tipo " + tipo + " en el resto."});
+    const obl = cs.filter(c => c.sens && c.obl && !(c.soloRes && lugar === "ind"));
+    let sens;
+    if (lugar === "viv") { sens = 30; R.push({e: "obl", t: "30 mA: en vivienda todos los circuitos deben quedar protegidos a 30 mA como máximo (ITC-BT-25)."}); }
+    else if (obl.some(c => c.sens === 30)) { sens = 30; }
+    else if (!cs.length || cs.some(c => c.per)) { sens = 30; R.push({e: "rec", t: "30 mA: protección complementaria para circuitos que usan o tocan personas (ITC-BT-24, ap. 3.5)."}); }
+    else if (lugar === "ter") { sens = 30; R.push({e: "rec", t: "30 mA: en un local lo habitual es que de estos receptores cuelguen tomas o equipos que usan personas, y solo 30 mA o menos da protección complementaria (guía BT-24, ap. 3.5). Con buena tierra, 100 o 300 mA también cumplirían la ITC-BT-24."}); }
+    else { sens = 300; R.push({e: "tec", t: "300 mA: son receptores fijos; con 30 mA las fugas propias de motores y variadores darían disparos sin defecto."}); }
+    obl.forEach(c => R.push({e: "obl", t: c.obl + "."}));
+    return {sens, tipo, ta, taPor: acon.map(c => c.n.toLowerCase() + " " + c.fa).join("; "), si: sis.length > 0, ret: "I", R};
+  }
+  /* Magnetotérmico: curva según lo que cuelga (guía BT-22) y longitud máxima protegida */
+  const SEC = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120];
+  const cMax = (a, b) => a > b ? a : b;
+  function curva(lugar, ids) {
+    const cs = CARGAS.filter(c => ids.includes(c.id)), R = [];
+    let cv = cs.reduce((t, c) => cMax(t, c.cv), "B");
+    if (!cs.length) { cv = "C"; R.push({e: "rec", t: "Curva C: sin saber qué cuelga, es la de carga mixta y la habitual (guía BT-22)."}); }
+    else if (cv === "B") { cv = "C"; R.push({e: "tec", t: "Curva C: es la estándar y evita disparos intempestivos. Con estas cargas, sin picos de conexión, también valdría la B, que protege líneas más largas (guía BT-22)."}); }
+    else if (cv === "C") R.push({e: "rec", t: "Curva C: carga mixta, con picos de conexión moderados (guía BT-22)."});
+    else R.push({e: "rec", t: "Curva D por: " + cs.filter(c => c.cv === "D").map(c => c.n.toLowerCase()).join("; ") + ". Tienen transitorios importantes, como el arranque de motores (guía BT-22)."});
+    R.push({e: "tec", t: "Casos especiales, fuera de esta propuesta: curva Z (2,4 a 3,6 In) para proteger circuitos electrónicos y curva MA (12 In, sin protección de sobrecarga) para arranque de motores (catálogo de fabricante; UNE-EN 60947-2)."});
+    if (cs.length) R.push({e: "tec", t: "Qué pico de conexión tiene cada aparato lo da su fabricante: comprueba que la curva no dispare al arrancar."});
+    if (lugar === "viv") R.push({e: "tec", t: "Si los circuitos cumplen la caída de tensión de la ITC-BT-25, las curvas B, C y D disparan ante un cortocircuito al final de la línea."});
+    else if (cv === "D") R.push({e: "tec", t: "La curva D es la que menos longitud de línea protege: en líneas largas, comprueba que un cortocircuito al final llegue a dispararla."});
+    return {cv, R};
+  }
+  // guía BT-22: L = 0,8 · U · S · γ / (Im · (1 + m)), con γ en caliente (dividida por 1,5), m = 1 e Im en el margen superior de la curva
+  function lmax(In, cv, s, mat, sis) {
+    const g = (mat === "Al" ? 35 : 56) / 1.5, Im = MAG[cv][1] * In;
+    return sis === "3" ? 0.8 * Math.sqrt(3) * 230 * s * g / (2 * Im) : 0.8 * 230 * s * g / (2 * Im);
+  }
+  function magneto(lugar, ids, m, minCv) {
+    const r = curva(lugar, ids);
+    if (minCv && minCv > r.cv) { r.cv = minCv; r.R = [{e: "tec", t: "Curva " + minCv + ": la misma que pide lo que cuelga del subcuadro, para que no dispare con sus arranques."}]; }
+    r.In = +m.In || null; r.s = +m.s || null; r.L = +m.L || null;
+    if (r.In && r.s) {
+      r.tab = ["B", "C", "D"].map(k => [k, lmax(r.In, k, r.s, m.mat, m.sis)]);
+      r.lm = lmax(r.In, r.cv, r.s, m.mat, m.sis);
+      if (r.L) { r.ok = r.L <= r.lm + 1e-9; if (!r.ok) r.sube = SEC.find(x => x > r.s && lmax(r.In, r.cv, x, m.mat, m.sis) >= r.L) || null; }
+    }
+    return r;
+  }
+  /* Balance de fugas permanentes a 50 Hz bajo un diferencial */
+  const CABLE = 1.5 / 100;   // mA por metro, según el manual de APIEM (2022)
+  function fugas(ids, cant, metros, otras) {
+    const cs = CARGAS.filter(c => ids.includes(c.id));
+    let min = 0, max = 0; const det = [];
+    const def = []; let enW = false;
+    cs.filter(c => c.fu).forEach(c => { if (cant[c.id] == null || cant[c.id] === "") def.push(c.fuU); let q = cant[c.id] > 0 ? +cant[c.id] : 1; if (c.fuU === "kW" && q >= 100) { q /= 1000; enW = true; } min += c.fu[0] * q; max += c.fu[1] * q; det.push(c.n.toLowerCase() + " × " + fN(q, q % 1 ? 1 : 0) + (c.fuU === "kW" ? " kW" : "") + ": " + (c.fu[0] === c.fu[1] ? "" : fN(c.fu[0] * q, 1) + " a ") + fN(c.fu[1] * q, 1) + " mA (" + c.fuF + ")"); });
+    const m = metros > 0 ? +metros : 0;
+    if (m) { min += CABLE * m; max += CABLE * m; det.push(fN(m) + " m de cable: " + fN(CABLE * m, 1) + " mA (manual de APIEM (2022))"); }
+    const ot = otras > 0 ? +otras : 0;
+    if (ot) { min += ot; max += ot; det.push("receptores no listados: " + fN(ot, 1) + " mA (suma indicada por ti)"); }
+    return {min, max, det, sin: cs.filter(c => !c.fu && c.id !== "tomas").map(c => c.n.toLowerCase()), hf: cs.some(c => ["var1", "var3", "rect", "asc", "sai", "arranc"].includes(c.id)), hay: det.length > 0, def: def.length > 0, enW};
+  }
+  const suma = (a, b) => ({min: a.min + b.min, max: a.max + b.max, det: a.det.concat(b.det), sin: [...new Set(a.sin.concat(b.sin))], hf: a.hf || b.hf, hay: a.hay || b.hay, def: a.def || b.def, enW: a.enW || b.enW});
+  function juzga(f, d) {
+    const n = d.num || 1; f.n = n; f.l30 = 0.3 * d.sens; f.l50 = 0.5 * d.sens; f.pmin = f.min / n; f.pmax = f.max / n;
+    // semáforo con el rango entero: bien si ni el máximo pasa de lo recomendado; excesivo solo si hasta el mínimo supera la mitad
+    f.est = f.pmax <= f.l30 + 1e-9 ? "ok" : f.pmin > f.l50 + 1e-9 ? "bad" : "warn";
+    f.hacen = Math.max(n + 1, Math.ceil(f.max / f.l50 - 1e-9));   // los que harían falta para que ni el máximo pase de la mitad
+    d.fug = f;
+  }
+  // ITC-BT-25, ap. 2.3.2: estos circuitos suponen electrificación elevada y se añaden a los cinco de la básica
+  const ELEV = {clima: "aire acondicionado (C9)", calefel: "calefacción eléctrica (C8)", calef: "calefacción eléctrica por cable (C8)", ve: "recarga de vehículo (C13)"};
+  const difVE = (c, i) => { const d = final(c.lugar, ["ve"]); d.nombre = "Diferencial exclusivo de la recarga"; d.R.push({e: "obl", t: "El circuito C13 lleva un diferencial exclusivo, aparte de los demás (ITC-BT-25, ap. 2.3.2)."}); juzga(fugas(["ve"], c.cant[i], 0, 0), d); return d; };
+  // el número solo sube por fugas hasta cumplir la condición de la guía (menos de la mitad de la sensibilidad); el 30 % queda como consejo
+  const porFugas = (d, fg) => { const nf = Math.ceil(fg.max / (0.5 * d.sens) - 1e-9); if (nf > (d.num || 1)) { d.num = nf; d.R.push({e: "rec", t: "Por fugas hacen falta " + nf + " diferenciales, más de los que pide la regla de los cinco circuitos: así ninguno pasa de la mitad de su sensibilidad con la fuga máxima estimada (guía BT-24, ap. 4.1)."}); } };
+  /* Cascada por niveles (local e industria). Escalones de retardo y tiempo de corte máximo del catálogo ComPacT NSX (MicroLogic Vigi) */
+  const ESC = [{dt: 0, c: 40}, {dt: 60, c: 140}, {dt: 150, c: 300}, {dt: 500, c: 800}];
+  const padres = c => c.cargas.map((_, i) => i === 0 ? null : (c.padre && c.padre[i] != null ? c.padre[i] : 0));
+  function nombres(c) {
+    const pa = padres(c), n = c.cargas.length, viv = c.lugar === "viv", out = ["Cuadro general"], num = [""];
+    for (let i = 1; i < n; i++) { const pos = pa.slice(0, i + 1).filter((p, j) => j > 0 && p === pa[i]).length; out[i] = viv ? (n > 2 ? "Subcuadro " + pos : "Subcuadro") : "Cuadro " + (i + 1); }
+    if (!viv && c.nombre) c.nombre.forEach((x, i) => { if (x && String(x).trim()) out[i] = String(x).trim(); });
+    return out;
+  }
+  function cascada(c) {
+    const out = {cuadros: [], notas: [], pares: []}, pa = padres(c), nom = nombres(c);
+    const hijos = i => pa.map((p, j) => p === i ? j : -1).filter(j => j > 0);
+    const alt = i => { const h = hijos(i); return h.length ? 1 + Math.max(...h.map(alt)) : 0; };
+    const kmax = alt(0); if (kmax > 3) out.exceso = true;
+    const haz = i => {
+      const h = hijos(i), ids = c.cargas[i] || [], fprop = fugas(ids, c.cant[i], c.cable[i], c.otras[i]);
+      if (!h.length) {
+        const s = final(c.lugar, ids); s.nombre = "Diferencial del cuadro";
+        s.R.push({e: "rec", t: "Instantáneo: es el último de su rama y el que debe saltar primero ante una fuga en sus circuitos."}); juzga(fprop, s);
+        const m = magneto(c.lugar, ids, c.mag[i]); m.nombre = "Magnetotérmicos de sus circuitos";
+        out.cuadros[i] = {nombre: nom[i], difs: [s], mag: m, k: 0};
+        return {top: s, k: 0, fug: fprop, ids, cv: m.cv, rama: [{i, d: s}]};
+      }
+      const H = h.map(haz);
+      const g = ids.length ? final(c.lugar, ids) : null;
+      if (g) { g.nombre = "Diferencial de los circuitos directos"; g.R.push({e: "rec", t: "Instantáneo: protege solo lo que sale directamente de este cuadro, que son circuitos finales."}); juzga(fprop, g); }
+      const abajo = H.map(x => x.top).concat(g ? [g] : []);
+      const k = Math.min(3, 1 + Math.max(...H.map(x => x.k)));
+      const sMax = Math.max(...abajo.map(d => d.sens));
+      const sens = [300, 1000, 3000, 10000].find(v => v >= 3 * sMax - 1e-9) || 10000;
+      const usaS = k === 1 && kmax === 1 && sens === 300;
+      const cab = {nombre: "Diferencial de cabecera", sens, ret: usaS ? "S" : "R", dt: ESC[k].dt, corte: ESC[k].c, tipo: abajo.reduce((x, d) => tMax(x, d.tipo), "AC"), R: []};
+      cab.R.push({e: "obl", t: "Tiene otros diferenciales aguas abajo, así que debe ser selectivo con ellos (ITC-BT-17)."});
+      cab.R.push({e: "rec", t: fI(sens) + ": al menos el triple que los " + fI(sMax) + " de aguas abajo (guía BT-25, ap. 2.1)."});
+      if (usaS) cab.R.push({e: "rec", t: "Selectivo (tipo S): su tiempo de no respuesta supera el tiempo de corte del instantáneo de aguas abajo (guía BT-25, ap. 2.1)."});
+      else {
+        cab.R.push({e: "rec", t: "Retardo de " + cab.dt + " ms: mayor que el tiempo de corte del nivel de aguas abajo (menos de " + ESC[k - 1].c + " ms). Con ese ajuste corta en menos de " + cab.corte + " ms. Escalones y tiempos del catálogo ComPacT NSX de Schneider, tomado como referencia: con otro fabricante, comprueba su tabla."});
+        cab.R.push({e: "tec", t: "No existe como diferencial modular: es un interruptor automático con protección diferencial regulable, o un relé diferencial con toroidal que dispara un interruptor."});
+      }
+      cab.R.push({e: "obl", t: "Corta en menos de 1 s, el máximo para circuitos de distribución en esquema TT (UNE-HD 60364-4-41, ap. 411.3.2.4)."});
+      cab.R.push({e: "rec", t: "Tipo " + cab.tipo + ": igual o superior al de los diferenciales de aguas abajo (selectividad de tipo, manual de APIEM)."});
+      const taAb = abajo.map(d => d.ta).filter(Boolean).reduce((x, y) => x ? tMax(x, y) : y, null);
+      if (taAb && ORD.indexOf(taAb) > ORD.indexOf(cab.tipo)) { cab.ta = taAb; cab.taPor = "si abajo instalas ese tipo"; cab.R.push({e: "tec", t: "Si en algún diferencial de aguas abajo instalas el tipo " + taAb + " aconsejado, este debe ser también tipo " + taAb + "."}); }
+      H.forEach((x, q) => out.pares.push({up: {nombre: nom[i], d: cab}, dn: {nombre: nom[h[q]], d: x.top}}));
+      if (g) out.pares.push({up: {nombre: nom[i], d: cab}, dn: {nombre: "los circuitos directos de " + nom[i], d: g}});
+      const fug = H.reduce((x, y) => suma(x, y.fug), fprop); juzga(fug, cab);
+      const todas = H.reduce((x, y) => x.concat(y.ids), ids), cvH = H.reduce((x, y) => cMax(x, y.cv), "B");
+      const m = ids.length ? magneto(c.lugar, ids, c.mag[i]) : magneto(c.lugar, todas, c.mag[i], cvH);
+      m.nombre = ids.length ? "Magnetotérmicos de sus circuitos" : "Magnetotérmicos de las líneas a los cuadros de aguas abajo";
+      out.cuadros[i] = {nombre: nom[i], difs: [cab, g].filter(Boolean), mag: m, k};
+      const larga = H.reduce((x, y) => y.rama.length > x.rama.length ? y : x);
+      return {top: cab, k, fug, ids: todas, cv: cMax(m.cv, cvH), rama: larga.rama.concat([{i, d: cab}])};
+    };
+    const R0 = haz(0);
+    out.cadena = R0.rama.map(x => ({i: x.i, nombre: nom[x.i], d: x.d}));
+    out.par = null; out.tope = R0.top.sens; out.tierra = 50 / (out.tope / 1000);
+    if (out.exceso) out.notas.push({e: "obl", t: "Hay más de cuatro niveles de diferencial en serie. No caben con selectividad: el siguiente escalón de retardo (1.000 ms) corta en hasta 1,5 s, por encima del máximo de 1 s (UNE-HD 60364-4-41, ap. 411.3.2.4)."});
+    out.notas.push({e: "rec", t: "Un cuadro intermedio puede ir sin diferencial de cabecera si cada salida lleva el suyo y las líneas entre cuadros van en canalización aislante (ITC-BT-17; guía BT-24, ap. 4.2). Ahorra un nivel de la cascada."});
+    return out;
+  }
+  /* Protección contra sobretensiones (ITC-BT-23 y guía BT-23, tablas A y B; ITC-BT-52) */
+  function sobret(c, out) {
+    const s = c.spd || {}, todas = c.cargas.flat(), R = [], obl = [], rec = [];
+    if (s.aerea) obl.push("la alimentación es aérea, en todo o en parte (ITC-BT-23, ap. 3.2)");
+    if (s.rayo === "edif") obl.push("el edificio tiene pararrayos (Código Técnico, SUA 8)");
+    if (s.critico) obl.push("un fallo afectaría a personas, animales, un servicio público o un proceso que no se puede interrumpir (guía BT-23, tabla A)");
+    const ve = todas.includes("ve"); if (ve) obl.push("hay recarga de vehículo eléctrico (ITC-BT-52, ap. 6.4)");
+    if (s.rayo === "cerca") rec.push("hay un pararrayos a menos de 50 m");
+    if (s.torm === "25") rec.push("la zona tiene 25 o más días de tormenta al año: muy recomendable"); else if (s.torm === "20") rec.push("la zona tiene 20 o más días de tormenta al año");
+    const sens = CARGAS.filter(x => todas.includes(x.id) && ["info", "autom", "sai", "var1", "var3", "impres"].includes(x.id));
+    if (sens.length) rec.push("hay equipos sensibles y costosos (" + sens.map(x => x.n.toLowerCase()).join("; ") + ")");
+    if (todas.includes("fv")) rec.push("hay instalación fotovoltaica, especialmente expuesta");
+    if (c.lugar !== "viv") rec.push("es una actividad " + (c.lugar === "ind" ? "industrial" : "comercial o terciaria"));
+    const nivel = obl.length ? "obl" : rec.length ? "rec" : "no";
+    const t1 = s.rayo === "edif" || s.rayo === "cerca", t3 = sens.length > 0;
+    if (obl.length) R.push({e: "obl", t: "Obligatorio porque " + obl.join("; ") + "."});
+    if (rec.length) R.push({e: "rec", t: "Recomendable porque " + rec.join("; ") + " (guía BT-23, tabla B)."});
+    if (nivel === "no") R.push({e: "rec", t: "No se exige: con red subterránea y sin las situaciones de las tablas A y B de la guía BT-23, basta la resistencia propia de los equipos (ITC-BT-23, ap. 3.1). Si no has indicado los días de tormenta, míralo: con 20 o más pasa a recomendable."});
+    R.push({e: "rec", t: "Tipo 2 en el cuadro general, lo más cerca posible del origen de la instalación: en general basta con él (guía BT-23, ap. 4.A)."});
+    if (t1) R.push({e: s.rayo === "edif" ? "obl" : "rec", t: "Además, tipo 1 en el origen de la instalación, antes de los contadores, por el pararrayos. Corriente de impulso de 12,5 kA o más (guía BT-23, ap. 4)."});
+    if (t3) R.push({e: "rec", t: "Además, tipo 3 junto a los equipos sensibles, si quedan lejos del cuadro (guía BT-23, ap. 3.2)."});
+    R.push({e: "rec", t: "Va aguas arriba del diferencial, entre el interruptor general y el diferencial, para que su actuación no lo dispare. Si va aguas abajo, ese diferencial debe ser selectivo (S) o retardado (guía BT-23, ap. 3.2)."});
+    R.push({e: "obl", t: "En esquema TT se conecta entre cada conductor, incluido el neutro, y la tierra (ITC-BT-23, ap. 3.2)."});
+    R.push({e: "rec", t: "Valores mínimos: nivel de protección por debajo de 2,5 kV (1,5 kV si hay equipos muy sensibles), tensión máxima permanente por encima de 253 V y corriente nominal de descarga de 5 kA o más (guía BT-23, ap. 4.B)."});
+    R.push({e: "tec", t: "Si no lleva protección propia, ponle aguas arriba el fusible o interruptor que indique su fabricante, para que un fallo del protector no tire el interruptor general."});
+    R.push(ve ? {e: "obl", t: "Con recarga de vehículo se exige también protección contra sobretensiones permanentes, prevista hasta 440 V entre fase y neutro (ITC-BT-52, ap. 6.4)."}
+      : {e: "prev", t: "El proyecto de modificación del REBT prevé hacer obligatoria en toda instalación nueva la protección contra sobretensiones transitorias y también contra las permanentes."});
+    out.cuadros[0].spd = {nivel, t1, t3, perm: ve, R};
+    if (nivel !== "no") out.cuadros.forEach((q, i) => { if (i) q.spd2 = true; });
+    return out;
+  }
+  const recomienda = c => sobret(c, recomienda0(c));
+  function recomienda0(c) {
+    const out = {cuadros: [], notas: []};
+    const gen = c.cargas[0] || [], sub = c.cargas[1] || [];
+    if (c.cargas.length < 2) {
+      const viv = c.lugar === "viv", conVE = viv && gen.includes("ve");
+      const resto = conVE ? gen.filter(x => x !== "ve") : gen;
+      const d = final(c.lugar, resto); d.nombre = "Diferencial";
+      d.R.push({e: "rec", t: conVE ? "Instantáneo: no tiene otro diferencial aguas arriba ni aguas abajo (guía BT-25)." : "Instantáneo: al ser el único diferencial del recorrido no necesita retardo (guía BT-25)."});
+      let dve = null;
+      if (viv) {
+        // ITC-BT-25, ap. 2.3.2: estos circuitos suponen electrificación elevada y se añaden a los cinco de la básica
+        const ext = gen.filter(x => ELEV[x]), minC = 5 + ext.length, nc = Math.max(5, (c.circ && +c.circ[0]) || c.ncirc || 5, minC);
+        if (ext.length) d.R.push({e: "obl", t: "Electrificación elevada por: " + ext.map(x => ELEV[x]).join(", ") + ". Se añaden a los cinco circuitos de la básica: " + minC + " circuitos como mínimo" + " (ITC-BT-25, ap. 2.3.2)."});
+        out.elevada = ext.length > 0 || nc > 5; out.ncirc = nc; out.nG = nc; out.circ = [nc];
+        const nd = nc - (conVE ? 1 : 0), n = Math.max(1, Math.ceil(nd / 5)); d.num = n;
+        d.R.push({e: "obl", t: "Uno por cada cinco circuitos como mínimo: con " + nd + " circuitos" + (conVE ? ", sin contar el de recarga" : "") + ", " + n + (n === 1 ? " diferencial" : " diferenciales, en paralelo") + " (ITC-BT-25)."});
+        if (conVE) dve = difVE(c, 0);
+      }
+      const fg = fugas(resto, c.cant[0], c.cable[0], c.otras[0]);
+      juzga(fg, d);
+      out.cuadros.push({nombre: "Cuadro general", difs: dve ? [d, dve] : [d], mag: magneto(c.lugar, gen, c.mag[0])});
+      out.tope = d.sens;
+    } else {
+      if (c.lugar !== "viv") return cascada(c);
+      const viv = c.lugar === "viv", subs = c.cargas.slice(1), K = subs.length;
+      const veG = viv && gen.includes("ve"), genR = veG ? gen.filter(x => x !== "ve") : gen;
+      let nG = 0, ext = [], total = 0; const nS = [];
+      if (viv) {
+        ext = [...new Set(c.cargas.flat())].filter(x => ELEV[x]);
+        // el cuadro general lleva al menos los 5 de la básica; los subcuadros suman a partir de ahí
+        nG = Math.max(5, (c.circ && +c.circ[0]) || c.ncirc || 5);
+        subs.forEach((_, k) => { const raw = c.circ ? c.circ[k + 1] : null; nS.push(raw == null || raw === "" || isNaN(+raw) ? 2 : Math.max(1, +raw)); });
+        total = nG + nS.reduce((x, y) => x + y, 0);
+        if (total < 5 + ext.length) { nG += 5 + ext.length - total; total = 5 + ext.length; }
+        out.elevada = ext.length > 0 || total > 5; out.ncirc = total; out.nG = nG; out.circ = [nG].concat(nS);
+      }
+      const regla = (d, n, ve, donde) => { const nd = Math.max(0, n - (ve ? 1 : 0)); d.num = Math.max(1, Math.ceil(nd / 5)); d.R.push({e: "obl", t: "Uno por cada cinco circuitos como mínimo: con " + nd + (nd === 1 ? " circuito" : " circuitos") + " en " + donde + (ve ? ", sin contar el de recarga" : "") + ", " + d.num + (d.num === 1 ? " diferencial" : " diferenciales, en paralelo") + " (ITC-BT-25)."}); };
+      const hayG = genR.length > 0 || (viv && nG - (veG ? 1 : 0) > 0);
+      const g = hayG ? final(c.lugar, genR) : null; if (g) g.nombre = "Diferencial de los circuitos directos";
+      const dveG = veG ? difVE(c, 0) : null;
+      if (viv && g) regla(g, nG, veG, "el cuadro general");
+      const S = subs.map((sub, k) => {
+        const veS = viv && sub.includes("ve"), subR = veS ? sub.filter(x => x !== "ve") : sub;
+        const s = final(c.lugar, subR); s.nombre = "Diferencial del subcuadro";
+        if (viv) regla(s, nS[k], veS, "este subcuadro");
+        s.R.push(viv ? {e: "rec", t: "Instantáneo: va en paralelo con el del cuadro general, sin otro diferencial aguas arriba, así que no necesita retardo (guía BT-25)."} : {e: "rec", t: "Instantáneo: es el que debe saltar primero ante una fuga en sus circuitos."});
+        const fs = fugas(subR, c.cant[k + 1], c.cable[k + 1], c.otras[k + 1]); juzga(fs, s);
+        return {s, fs, dve: veS ? difVE(c, k + 1) : null, ms: magneto(c.lugar, sub, c.mag[k + 1])};
+      });
+      if (ext.length) S[0].s.R.push({e: "obl", t: "Electrificación elevada por: " + ext.map(x => ELEV[x]).join(", ") + ". Se añaden a los cinco circuitos de la básica: " + total + " circuitos como mínimo en la vivienda" + " (ITC-BT-25, ap. 2.3.2)."});
+      const todos = S.map(x => x.s).concat(g ? [g] : []);
+      const abajo = Math.max(...todos.map(d => d.sens));
+      let cab = null; if (!viv) {
+      cab = {nombre: "Diferencial de cabecera", sens: abajo <= 30 ? 300 : 1000, ret: abajo <= 30 ? "S" : "R", tipo: todos.reduce((x, d) => tMax(x, d.tipo), "AC"), R: []};
+      cab.R.push({e: "obl", t: todos.length > 1 ? "Tiene otros diferenciales aguas abajo, así que debe ser selectivo con ellos (ITC-BT-17)." : "Tiene otro diferencial aguas abajo, así que debe ser selectivo con él (ITC-BT-17)."});
+      cab.R.push({e: "rec", t: cab.ret === "S" ? "Selectivo (tipo S) y de 300 mA: retardo y sensibilidad al menos triple que los 30 mA de aguas abajo (guía BT-25)." : "1 A con retardo regulable: aguas abajo hay 300 mA, y el triple ya no existe en tipo S. Hace falta un relé diferencial; la guía BT-24 habla de retardos de hasta 1 s."});
+      cab.R.push({e: "tec", t: "Tipo " + cab.tipo + ": el de aguas arriba debe detectar al menos lo mismo que los de aguas abajo."});
+      const taAb = todos.map(d => d.ta).filter(Boolean).reduce((x, y) => x ? tMax(x, y) : y, null);
+      if (taAb && ORD.indexOf(taAb) > ORD.indexOf(cab.tipo)) { cab.ta = taAb; cab.taPor = "si abajo instalas ese tipo"; cab.R.push({e: "tec", t: "Si en algún diferencial de aguas abajo instalas el tipo " + taAb + " aconsejado, este debe ser también tipo " + taAb + "."}); }
+      }
+      const fgn = fugas(genR, c.cant[0], c.cable[0], c.otras[0]);
+      if (g) juzga(fgn, g); if (cab) juzga(S.reduce((x, y) => suma(x, y.fs), fgn), cab);
+      const cvS = S.reduce((x, y) => cMax(x, y.ms.cv), "B");
+      const mg = gen.length ? magneto(c.lugar, gen, c.mag[0]) : magneto(c.lugar, subs.flat(), c.mag[0], cvS);
+      mg.nombre = gen.length ? "Magnetotérmicos de sus circuitos" : K > 1 ? "Magnetotérmicos de las líneas a los subcuadros" : "Magnetotérmico de la línea al subcuadro";
+      out.cuadros.push({nombre: "Cuadro general", difs: [cab, g, dveG].filter(Boolean), mag: mg, aviso: viv ? (K > 1 ? "Las líneas a los subcuadros salen antes del diferencial, cada una con su magnetotérmico" : "La línea al subcuadro sale antes del diferencial, con su propio magnetotérmico") + ". Así una fuga en un subcuadro no tira el resto de la casa." : null});
+      if (viv && g) g.R.push({e: "rec", t: "Solo protege los circuitos que salen de este cuadro. Los subcuadros llevan el suyo, en paralelo: no hay diferenciales en serie y no hace falta selectividad (ITC-BT-17)."});
+      S.forEach((x, k) => { x.ms.nombre = "Magnetotérmicos de sus circuitos"; out.cuadros.push({nombre: K > 1 ? "Subcuadro " + (k + 1) : "Subcuadro", difs: [x.s, x.dve].filter(Boolean), mag: x.ms, aviso: viv ? "La línea desde el cuadro general no lleva diferencial: debe ir en tubo o canal aislante, con conductores de 300/500 V como mínimo (guía BT-24, ap. 4.2)." : null}); });
+      out.par = cab && cab.ret === "S" ? {up: cab, dn: S.map(x => x.s).reduce((x, y) => y.sens > x.sens ? y : x), varios: K > 1} : null;
+      out.tope = cab ? cab.sens : abajo;
+      if (viv) out.notas.push({e: "rec", t: "Si la línea a un subcuadro va por tubo o bandeja metálicos, no vale como doble aislamiento: pon en su cabeza un diferencial selectivo (tipo S) de 100 o 300 mA, solo para esa línea. Queda en serie con el del subcuadro y cumple la selectividad (ITC-BT-17; guía BT-25, ap. 2.1)."});
+      else out.notas.push({e: "rec", t: "Alternativa sin diferencial de cabecera: poner solo los de " + fI(abajo) + ", cada uno con su grupo de circuitos. Es válida si la línea hasta el subcuadro queda protegida por otro medio (por ejemplo, aislamiento de clase II)."});
+    }
+    out.tierra = 50 / (out.tope / 1000);
+    if (c.lugar === "viv") out.cuadros[0].iga = {In: out.elevada ? 40 : 25, mas: !!out.elevada, R: [
+      {e: "obl", t: "Interruptor general automático de corte omnipolar, de 25 A como mínimo (ITC-BT-25, ap. 2.1)."},
+      {e: "rec", t: out.elevada ? "40 A o más: la electrificación elevada prevé 9.200 W como mínimo (ITC-BT-10; calibres de la tabla A de la guía BT-25: 40, 50 o 63 A según la potencia)." : "25 A: corresponde a los 5.750 W de la electrificación básica (ITC-BT-10; tabla A de la guía BT-25)."},
+      {e: "obl", t: "Poder de corte suficiente para el cortocircuito en su punto de instalación, de 4.500 A como mínimo (ITC-BT-17, ap. 1.3)."},
+      {e: "tec", t: "El calibre definitivo depende de la potencia prevista o contratada y de la derivación individual."}]};
+    return out;
+  }
+  return {nombres, cascada, CARGAS, GRUPOS, fugas, SEC, recomienda, lmax, SENS, CAL, MAG, NOMBRE, difBanda, difSolape, magBanda, magSolape, analiza, fN, fI, fT};
+})();
+
+
+/* Interfaz */
+if (typeof document !== "undefined") (() => {
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const MAG0 = () => ({In: "", s: "", L: "", mat: "Cu", sis: "1"});
+const VACIO = () => ({lugar: null, ncirc: 5, circ: [5], auto: [0], spd: {aerea: false, rayo: "no", critico: false, torm: ""}, padre: [null], plegado: [false], nombre: [null], sel: 0, abiertos: {}, cargas: [[]], cant: [{}], cable: [""], otras: [""], mag: [MAG0()]});
+const MAXSUB = 12;
+let st = VACIO();
+
+/* Dibujo del cuadro: los diferenciales como módulos sobre el carril DIN */
+/* Dibujo de cada aparato como módulo de carril DIN, dentro de su bloque */
+function modDif(d) {
+  const mw = 62, mh = 104, cx = mw / 2;
+  return `<svg class="mod" viewBox="-1 -1 ${mw + 2} ${mh + 2}" aria-hidden="true"><rect x="0" y="0" width="${mw}" height="${mh}" rx="5" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+    <circle cx="14" cy="9" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/><circle cx="${mw - 14}" cy="9" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/>
+    <circle cx="14" cy="${mh - 9}" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/><circle cx="${mw - 14}" cy="${mh - 9}" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/>
+    <rect x="9" y="20" width="20" height="26" rx="3" fill="var(--accent)"/>
+    <rect x="${mw - 25}" y="24" width="15" height="15" rx="3" fill="var(--sun)"/><text x="${mw - 17.5}" y="35.5" text-anchor="middle" class="tt">T</text>
+    <text x="${cx}" y="64" text-anchor="middle" class="ts">${P.fI(d.sens)}</text>
+    <text x="${cx - (d.ret === "I" ? 0 : 13)}" y="84" text-anchor="middle" class="tk">${d.tipo}</text>
+    ${d.ret === "S" ? `<rect x="${cx + 3}" y="72" width="17" height="16" rx="2" fill="none" stroke="var(--ink)" stroke-width="1.5"/><text x="${cx + 11.5}" y="84.5" text-anchor="middle" class="tk">S</text>` : d.ret === "R" ? `<text x="${cx + 13}" y="84" text-anchor="middle" class="tk">Δt</text>` : ""}</svg>`;
+}
+function modMag(m) {
+  const nw = 40, mh = 104, cx = nw / 2;
+  return `<svg class="mod mg" viewBox="-1 -1 ${nw + 2} ${mh + 2}" aria-hidden="true"><rect x="0" y="0" width="${nw}" height="${mh}" rx="5" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+    <circle cx="${cx}" cy="9" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/><circle cx="${cx}" cy="${mh - 9}" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/>
+    <rect x="${cx - 9}" y="20" width="18" height="26" rx="3" fill="var(--accent)"/>
+    <text x="${cx}" y="64" text-anchor="middle" class="ts">${m.cv}${m.In ? " " + m.In : ""}</text>
+    <path d="M${cx - 9} 86 q3 -14 7 -8 t11 -4" fill="none" stroke="var(--ink)" stroke-width="1.4"/></svg>`;
+}
+function modIGA(g) {
+  const mw = 62, mh = 104, cx = mw / 2;
+  return `<svg class="mod" viewBox="-1 -1 ${mw + 2} ${mh + 2}" aria-hidden="true"><rect x="0" y="0" width="${mw}" height="${mh}" rx="5" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+    <circle cx="14" cy="9" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/><circle cx="${mw - 14}" cy="9" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/>
+    <circle cx="14" cy="${mh - 9}" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/><circle cx="${mw - 14}" cy="${mh - 9}" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/>
+    <rect x="12" y="20" width="38" height="24" rx="3" fill="var(--accent)"/>
+    <text x="${cx}" y="64" text-anchor="middle" class="ts">IGA</text><text x="${cx}" y="84" text-anchor="middle" class="tk">${g.In} A</text></svg>`;
+}
+const fichaIGA = (g, razon) => `<div class="aparato"><div class="apc"><div class="mods">${modIGA(g)}</div><div class="apt"><small>Interruptor general automático (IGA)</small><div class="ficha"><b>${g.In} A</b>${g.mas ? "<span>o más</span>" : ""}<span>poder de corte ≥ 4.500 A</span></div></div></div>
+  <details><summary>Por qué</summary><ul class="razones">${g.R.map(razon).join("")}</ul></details></div>`;
+function modSPD(p) {
+  const mw = 62, mh = 104, cx = mw / 2;
+  return `<svg class="mod" viewBox="-1 -1 ${mw + 2} ${mh + 2}" aria-hidden="true"><rect x="0" y="0" width="${mw}" height="${mh}" rx="5" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+    <circle cx="14" cy="9" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/><circle cx="${mw - 14}" cy="9" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/>
+    <circle cx="${cx}" cy="${mh - 9}" r="3" fill="none" stroke="var(--mute)" stroke-width="1.2"/>
+    <rect x="12" y="18" width="38" height="28" rx="3" fill="var(--accent)"/><path d="M33 21l-7 11h6l-4 11 9-13h-6z" fill="var(--sun)"/>
+    <text x="${cx}" y="64" text-anchor="middle" class="ts">${p.t1 ? "T1+T2" : "T2"}</text><text x="${cx}" y="84" text-anchor="middle" class="tk">${p.perm ? "tr+per" : "trans."}</text></svg>`;
+}
+const SPDN = {obl: ["obl", "Obligatorio"], rec: ["", "Recomendado"], no: ["", "No exigido"]};
+const fichaSPD = (p, razon) => `<div class="aparato${p.nivel === "no" ? " tenue" : ""}"><div class="apc"><div class="mods">${modSPD(p)}</div><div class="apt"><small>Protector contra sobretensiones <span class="etq ${SPDN[p.nivel][0]}">${SPDN[p.nivel][1]}</span></small><div class="ficha"><b>${p.t1 ? "Tipo 1 + 2" : "Tipo 2"}</b><span>${p.perm ? "transitorias y permanentes" : "transitorias"}</span></div></div></div>
+  ${p.t3 ? `<p class="acon"><b>Tipo 3 aconsejado</b> junto a los equipos sensibles.</p>` : ""}<p class="acon">Aguas arriba del diferencial.</p>
+  <details><summary>Por qué</summary><ul class="razones">${p.R.map(razon).join("")}</ul></details></div>`;
+const PIA = [["C1", "Iluminación", 10], ["C2", "Tomas de uso general", 16], ["C3", "Cocina y horno", 25], ["C4", "Lavadora, lavavajillas y termo", 20], ["C5", "Baño y cuarto de cocina", 16], ["C6", "Adicional de iluminación", 10], ["C7", "Adicional de tomas", 16], ["C8", "Calefacción", 25], ["C9", "Aire acondicionado", 25], ["C10", "Secadora", 16], ["C11", "Automatización", 10], ["C12", "Adicional de C3, C4 o C5", "25, 20 o 16"], ["C13", "Recarga de vehículo", "según ITC-BT-52"]];
+const mods = d => { const n = d.num || 1, v = Math.min(n, 4); return `<div class="mods">${modDif(d).repeat(v)}${n > v ? `<span class="masm">+${n - v}</span>` : ""}</div>`; };
+const ETQ = {obl: ["obl", "Obligatorio"], rec: ["", "Recomendado"], prev: ["prev", "Previsto"], tec: ["", "Criterio técnico"]};
+const opt = (arr, v) => arr.map(o => `<option value="${o[0]}"${String(o[0]) === String(v) ? " selected" : ""}>${esc(o[1])}</option>`).join("");
+const RET = {I: "instantáneo", S: "selectivo (S)", R: "retardo regulable"};
+const retTxt = d => d.ret === "R" && d.dt ? "retardo " + d.dt + " ms" : RET[d.ret];
+
+const INFO = (id, que) => `<button type="button" class="inf" data-tip="${id}" aria-expanded="false" aria-label="Más información: ${que}">i</button>`;
+function ctl(i, c) {
+  if (!c.fu) return "";
+  const v = esc(st.cant[i][c.id] ?? 1), kw = c.fuU === "kW";
+  const inp = `<input type="number" inputmode="decimal" min="0" step="${kw ? "0.5" : "1"}" id="q${i}${c.id}" data-q="${i}" data-c="${c.id}" value="${v}" aria-label="${kw ? "Potencia total en kW de " : "Número de " + c.fuN + " de "}${esc(c.n)}">`;
+  return kw ? `<span class="cnt kw">${inp}<em>kW</em></span>`
+    : `<span class="cnt"><button type="button" data-paso="-1" data-para="q${i}${c.id}" aria-label="Uno menos">−</button>${inp}<button type="button" data-paso="1" data-para="q${i}${c.id}" aria-label="Uno más">+</button></span>`;
+}
+function pintaCargas() {
+  const n = st.cargas.length, viv = st.lugar === "viv", ref = $("refT").innerHTML;
+  const NOM = P.nombres(st), nombre = i => NOM[i];
+  const hijos = i => st.padre.map((p, j) => p === i ? j : -1).filter(j => j > 0), prof = i => i === 0 ? 0 : 1 + prof(st.padre[i]);
+  const tarjeta = i => `<section class="card tabl nv${i ? 1 : 0}" aria-label="${nombre(i)}"><h3 class="banda">${viv ? `<button type="button" class="pliega" data-pliega="${i}" aria-expanded="${!st.plegado[i]}" aria-label="${st.plegado[i] ? "Desplegar" : "Plegar"} ${nombre(i)}">${st.plegado[i] ? "▸" : "▾"}</button>` : ""}${viv || !i ? "" : `<span class="ruta" id="rt${i}"></span>`}<span id="bn${i}">${esc(nombre(i))}</span><em>${st.cargas[i].length ? st.cargas[i].length + (st.cargas[i].length === 1 ? " receptor" : " receptores") : "vacío"}</em>${i ? `<button type="button" class="qsub" data-quitasub="${i}" aria-label="Quitar ${esc(nombre(i))}">${viv ? "Quitar" : "Quitar este cuadro"}</button>` : ""}</h3>
+      <p class="rsm" id="rsm${i}"${viv && st.plegado[i] ? "" : " hidden"}></p>
+      <div class="duo"${viv && st.plegado[i] ? " hidden" : ""}><div class="cuelga">${viv ? "" : `<label class="lnom">Nombre del cuadro<input type="text" maxlength="24" id="nom${i}" data-nom="${i}" value="${esc(st.nombre[i] || "")}" placeholder="${esc(P.nombres(Object.assign({}, st, {nombre: null}))[i])}"></label>`}<div class="tit2"><p class="sub">Qué cuelga</p>${INFO("tq" + i, "cómo rellenarlo")}</div>
+      <p class="hint tip" id="tq${i}" hidden>Añade lo que haya y cuántos. Los grupos están ordenados por la electrónica que llevan, que es lo que decide el tipo de diferencial: manda el grupo más exigente. La cantidad sirve para estimar las fugas; en climatización y suelo radiante se pide la potencia total en kW (2,5 para 2.500 W). Las tomas de uso general no llevan cantidad: cuenta lo que se enchufa en ellas, que se añade aparte.</p>
+      ${i === 0 && n > 1 ? '<p class="hint">Solo lo que sale directamente de este cuadro. Vacío si solo alimenta a los subcuadros.</p>' : ""}
+      ${viv ? `<label class="lcirc">Circuitos en este cuadro<input type="number" inputmode="numeric" min="0" step="1" id="circ${i}" data-circ="${i}" value="${esc(st.circ[i] ?? (i ? 2 : 5))}"></label>` : ""}
+      ${P.GRUPOS.map(g => { const todas = P.CARGAS.filter(c => c.g === g.id), puestas = todas.filter(c => st.cargas[i].includes(c.id)), libres = todas.filter(c => !st.cargas[i].includes(c.id)), k = i + g.id;
+        return `<details class="grupoC" data-g="${k}"${st.abiertos[k] ?? (puestas.length > 0) ? " open" : ""}><summary class="gcab"><b>${g.n}</b>${g.t ? `<span class="tipoG">tipo ${g.t}</span>` : ""}${puestas.length ? `<span class="cuenta">${puestas.length}</span>` : ""}${INFO("tg" + k, g.n)}</summary><p class="hint tip" id="tg${k}" hidden>${g.d}</p>
+        ${puestas.length ? `<ul class="puestas">${puestas.map(c => `<li><span class="nom">${esc(c.n)}</span>${ctl(i, c)}<button type="button" class="qt" data-i="${i}" data-quita="${c.id}" aria-label="Quitar ${esc(c.n)}">✕</button></li>`).join("")}</ul>` : ""}
+        ${libres.length ? `<select data-i="${i}" data-anade="1" id="add${k}" aria-label="Añadir a ${esc(g.n)}"><option value="">Añadir…</option>${libres.map(c => `<option value="${c.id}">${esc(c.n)}</option>`).join("")}</select>` : `<p class="hint">Ya están todos añadidos.</p>`}</details>`; }).join("")}
+      <details class="grupoC afina" data-g="af${i}"${st.abiertos["af" + i] ? " open" : ""}><summary>Afinar la estimación de fugas <small>opcional</small></summary>
+        <div class="grid"><label>Metros de cable, sumados<input type="number" inputmode="decimal" min="0" step="10" id="cab${i}" data-cab="${i}" value="${esc(st.cable[i])}" placeholder="sin indicar"></label>
+        <label>Fuga de otros receptores (mA)<input type="number" inputmode="decimal" min="0" step="0.5" id="otr${i}" data-otr="${i}" value="${esc(st.otras[i])}" placeholder="sin indicar"></label></div>${ref}</details>
+      </div><div class="pone" id="pone${i}" aria-live="polite"></div></div></section>`;
+  const rama = i => { const h = hijos(i), puede = (viv ? i === 0 : prof(i) < 3) && n - 1 < MAXSUB;
+    const btn = puede ? `<button type="button" class="btn sec mas-sub" id="mas${i}" data-massub="${i}">+ Añadir ${viv ? "subcuadro" : "cuadro aguas abajo de" + (i ? "l " + nombre(i).toLowerCase() : "l general")}</button>` : "";
+    return tarjeta(i) + (h.length || btn ? `<div class="subs">` + h.map(rama).join("") + btn + `</div>` : ""); };
+  if (st.sel >= n) st.sel = 0;
+  $("cargas").innerHTML = viv ? rama(0) : tarjeta(st.sel);
+  $("mapa").hidden = viv || !st.lugar;
+  $("lCirc").hidden = !viv; $("spdBox").hidden = !st.lugar;
+  $("lugarInfo").hidden = $("paso2").hidden = $("paso3").hidden = !st.lugar;
+  if (!st.lugar) return;
+  $("lugarInfo").textContent = {viv: "Vivienda: 30 mA obligatorio en todos los circuitos y un diferencial por cada cinco. Tipo A previsto como mínimo.",
+    ter: "Local o terciario (tienda, oficina, bar): los 30 mA no son obligatorios con carácter general, solo recomendados donde hay personas. Tipo A previsto como mínimo, igual que en vivienda.",
+    ind: "Industria: sensibilidad libre, limitada por la tierra. El tipo AC seguirá permitido donde no haya electrónica."}[st.lugar];
+}
+
+function grafica(id, o) {
+  const est = $(id).clientWidth < 430, W = est ? 360 : 560, H = est ? 290 : 320, m = {l: est ? 46 : 54, r: 12, t: 12, b: 40};
+  const lx = Math.log10(o.x0), ux = Math.log10(o.x1), ly = Math.log10(o.y0), uy = Math.log10(o.y1);
+  const X = v => m.l + (Math.log10(v) - lx) / (ux - lx) * (W - m.l - m.r), Y = v => H - m.b - (Math.log10(Math.min(o.y1, Math.max(o.y0, v))) - ly) / (uy - ly) * (H - m.t - m.b);
+  let g = `<rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="var(--field)" stroke="var(--line)"/>`;
+  o.xt.forEach(t => { g += `<line x1="${X(t[0])}" x2="${X(t[0])}" y1="${m.t}" y2="${H - m.b}" stroke="var(--line)"/><text x="${X(t[0])}" y="${H - m.b + 15}" text-anchor="middle">${t[1]}</text>`; });
+  o.yt.forEach(t => { g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(t[0])}" y2="${Y(t[0])}" stroke="var(--line)"/><text x="${m.l - 6}" y="${Y(t[0]) + 4}" text-anchor="end">${t[1]}</text>`; });
+  g += `<text class="tit" x="${(m.l + W - m.r) / 2}" y="${H - 6}" text-anchor="middle">${o.xl}</text>`;
+  const N = 320;
+  o.dev.forEach(d => {
+    const up = [], lo = [];
+    for (let i = 0; i <= N; i++) { const x = Math.pow(10, lx + (ux - lx) * i / N), b = d.f(x); if (!b) continue; up.push([X(x), Y(b.hi === Infinity ? o.y1 : b.hi)]); lo.push([X(x), Y(b.lo <= 0 ? o.y0 : b.lo)]); }
+    if (!up.length) return;
+    g += `<polygon points="${up.concat(lo.reverse()).map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ")}" fill="${d.color}" fill-opacity=".28" stroke="${d.color}" stroke-width="2" stroke-linejoin="round"/>`;
+  });
+  g += `<line id="${id}cx" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+  const el = $(id); el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria)}">${g}</svg>`;
+  const svg = el.firstChild, lect = $(id + "l"), cx = $(id + "cx");
+  const mueve = ev => { const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W;
+    if (px < m.l || px > W - m.r) return; const x = Math.pow(10, lx + (px - m.l) / (W - m.l - m.r) * (ux - lx));
+    cx.setAttribute("x1", px); cx.setAttribute("x2", px); cx.setAttribute("visibility", "visible"); lect.textContent = o.lee(x); };
+  svg.addEventListener("pointermove", mueve); svg.addEventListener("pointerdown", mueve);
+  lect.textContent = o.lee(o.xi);
+}
+
+function barraFuga(d) {
+  const f = d.fug; if (!f) return "";
+  const r = (a, b) => (Math.abs(a - b) < 0.05 ? "" : "entre " + P.fN(a, 1) + " y ") + P.fN(b, 1) + " mA";
+  let h = `<div class="fuga ${f.est}">`;
+  if (f.hay) {
+    const pct = Math.min(100, f.pmax / f.l50 * 100), pm = Math.min(100, f.pmin / f.l50 * 100);
+    h += `<div class="fcab"><span>Fuga estimada${f.n > 1 ? " por diferencial" : ""}</span><span>${r(f.pmin, f.pmax)}</span></div>
+      <div class="fpista" role="img" aria-label="Fuga estimada de ${r(f.pmin, f.pmax)}; recomendado hasta ${P.fN(f.l30, 1)} mA y máximo ${P.fN(f.l50, 1)} mA"><i class="fmax" style="width:${pct.toFixed(0)}%"></i><i class="fmin" style="width:${pm.toFixed(0)}%"></i><b style="left:60%"></b></div>
+      <div class="fpie"><span>recomendado hasta ${P.fN(f.l30, 1)} mA</span><span>máximo ${P.fN(f.l50, 1)} mA</span></div>`;
+    if (f.enW) h += `<p><b>La potencia de climatización parecía estar en vatios</b> y se ha pasado a kW. Escríbela en kW: 2,5 para un equipo de 2.500 W.</p>`;
+    const mas = f.hacen > f.n ? " Si ocurre, reparte en " + f.hacen + " diferenciales de " + P.fI(d.sens) + ", separando primero los circuitos de más fuga: lavadora, lavavajillas, termo, horno y climatización." : "";
+    h += `<p>${f.est === "ok" ? "<b>Bien.</b> Ni en el peor caso pasa de lo recomendado." : f.est === "warn" ? "<b>A vigilar.</b> En el peor caso " + (f.pmax > f.l50 ? "superaría la mitad de la sensibilidad" : "pasaría del 30 % recomendado") + " y podría dar disparos sin que haya defecto; en el mejor, queda holgado." + mas : "<b>Excesivo.</b> Hasta en el mejor caso supera la mitad de la sensibilidad: hay que repartir." + mas}${f.n > 1 ? " Supone repartir las cargas por igual entre los " + f.n + "." : ""}</p>`;
+  }
+  if (f.sin.length) h += `<p>${f.hay ? "No incluye" : "Sin datos de fuga para"}: ${esc(f.sin.join("; "))}.${f.hay ? " La fuga real será mayor." : ""}</p>`;
+  if (f.hf) h += `<p>Los variadores y rectificadores añaden fugas de alta frecuencia, que pueden llegar al 5 % de su intensidad y no entran en esta cuenta (guía BT-24, anexo III.3).</p>`;
+  if (!f.hay && !f.sin.length && !f.hf) return "";
+  return h + (f.hay ? `<details><summary>Cómo se ha calculado</summary><ul class="razones">${f.det.map(x => `<li><span>${esc(x)}</span></li>`).join("")}<li><span>Se suman todas, como si colgaran de la misma fase. Repartidas entre las tres fases de una instalación trifásica tienden a anularse, y la fuga real es menor (guía BT-24, anexo III).</span></li><li><span>Límites: fuga menor que la mitad de la sensibilidad, y recomendado no pasar del 30 % (guía BT-24, ap. 4.1 y anexo III).</span></li></ul></details>` : "") + `</div>`;
+}
+
+function fichaMag(m, razon) {
+  let h = `<div class="aparato"><div class="apc"><div class="mods">${modMag(m)}</div><div class="apt"><small>${esc(m.nombre || "Magnetotérmicos de sus circuitos")}${st.lugar === "viv" ? " (PIA)" : ""}</small><div class="ficha"><b>Curva ${m.cv}</b>${m.In ? `<span>${m.In} A</span>` : ""}<span>uno por circuito</span></div></div></div>`;
+  h += st.lugar === "viv" ? `<details class="ref"><summary>Calibre de cada circuito</summary><div class="tabla"><table><thead><tr><th>Circuito</th><th>Interruptor</th></tr></thead><tbody>${PIA.map(p => `<tr><td><b>${p[0]}</b> ${p[1]}</td><td>${typeof p[2] === "number" ? p[2] + " A" : p[2]}</td></tr>`).join("")}</tbody></table></div><p class="hint">ITC-BT-25, tabla 1. En C4 vale 16 A por aparato si cada uno tiene circuito propio.</p></details>`
+    : `<p class="acon">El calibre depende de la carga y de la sección del cable: calcúlalo en la <a href="https://east101.github.io/calculadora-rebt/" target="_blank" rel="noopener">Calculadora REBT</a>.</p>`;
+  return h + `<details><summary>Por qué</summary><ul class="razones">${m.R.map(razon).join("")}</ul></details></div>`;
+}
+
+const ICOC = {
+  gen: '<rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M13.2 6.5 9.8 12h4.4l-3.4 5.5"/>',
+  med: '<rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M12 6.5v4M8 16.5v-3h8v3M12 10.5v3"/>',
+  fin: '<rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M8.5 7.5v5M12 7.5v5M15.5 7.5v5M8 16.5h8"/>'};
+const icoC = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICOC[k]}</svg>`;
+const prf = i => i === 0 || i == null ? 0 : 1 + prf(st.padre[i]);
+function mapa(r) {
+  const n = st.cargas.length, hijos = i => st.padre.map((p, j) => p === i ? j : -1).filter(j => j > 0), prof = i => i === 0 ? 0 : 1 + prof(st.padre[i]);
+  const corto = d => d.ret === "I" ? "inst." : d.ret === "S" ? "tipo S" : d.dt + " ms";
+  const DEF = P.nombres(Object.assign({}, st, {nombre: null}));
+  const nodo = i => { const c = r.cuadros[i], d = c.difs[0], h = hijos(i), puede = prof(i) < 3 && n - 1 < MAXSUB;
+    return `<li><div class="nw"><div role="button" tabindex="0" class="nodo k${prf(i)}${i === st.sel ? " on" : ""}" data-sel="${i}" aria-pressed="${i === st.sel}" aria-label="Editar ${esc(c.nombre)}"><span class="ni">${icoC(i === 0 ? "gen" : h.length ? "med" : "fin")}</span><span class="nn"><input class="nin" type="text" maxlength="24" id="mn${i}" data-nom="${i}" value="${esc(st.nombre[i] || "")}" placeholder="${esc(DEF[i])}" aria-label="Nombre del cuadro">${i ? `<small>aguas abajo de ${esc(r.cuadros[st.padre[i]].nombre)}</small>` : `<small>origen de la instalación</small>`}</span><span class="nd">${d ? P.fI(d.sens) + " · " + corto(d) : "sin diferencial"}</span></div>${i ? `<button type="button" class="qn" data-quitasub="${i}" aria-label="Quitar ${esc(c.nombre)}${h.length ? " y los de aguas abajo" : ""}">✕</button>` : ""}${puede ? `<button type="button" class="mas" data-massub="${i}" id="mas${i}" aria-label="Añadir un cuadro aguas abajo de ${esc(c.nombre)}">+</button>` : ""}</div>${h.length ? `<ul>${h.map(nodo).join("")}</ul>` : ""}</li>`; };
+  $("mapa").innerHTML = `<div class="tit2"><p class="sub">Mapa de la instalación</p><span class="hint">Toca un cuadro para editarlo y su nombre para cambiarlo · <b>+</b> añade otro aguas abajo · <b>✕</b> lo quita</span></div><div class="arbw"><div class="arb"><ul>${nodo(0)}</ul></div></div>`;
+}
+/* Lámina descargable: esquema de la instalación como SVG autónomo (colores fijos, sin variables CSS) */
+function lamina(st, r, P) {
+  const X = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const C = {ink: "#152033", mute: "#5d6b82", line: "#d5dbe6", bg: "#f3f5f9", card: "#ffffff", navy: "#1f3b63", soft: "#e3e9f2", sun: "#e0a030", lv: ["#2f6fb5", "#c8641a", "#1f8a7a", "#7a55b0"], ok: "#17773a", okbg: "#dff3e5", warn: "#8a5a00", warnbg: "#fcefcf"};
+  const F = "Figtree, 'Segoe UI', Helvetica, Arial, sans-serif", M = "'JetBrains Mono', Menlo, Consolas, monospace";
+  const n = r.cuadros.length, pa = i => i === 0 ? null : (st.padre && st.padre[i] != null ? st.padre[i] : 0);
+  const hijos = i => r.cuadros.map((_, j) => j).filter(j => j > 0 && pa(j) === i), prof = i => i === 0 ? 0 : 1 + prof(pa(i));
+  const ret = d => d.ret === "R" && d.dt ? "retardo " + d.dt + " ms" : d.ret === "S" ? "selectivo (S)" : "instantáneo";
+  const etq = d => /cabecera/.test(d.nombre) ? "Cabecera" : /directos/.test(d.nombre) ? "Circuitos directos" : /recarga/.test(d.nombre) ? "Recarga, exclusivo" : "Diferencial";
+  const modD = (x, y, d) => `<svg x="${x}" y="${y}" width="31" height="52" viewBox="-1 -1 64 106"><rect width="62" height="104" rx="6" fill="#fff" stroke="${C.ink}" stroke-width="2.4"/><rect x="9" y="16" width="20" height="26" rx="3" fill="${C.navy}"/><rect x="37" y="20" width="15" height="15" rx="3" fill="${C.sun}"/><text x="31" y="66" text-anchor="middle" font-family="${M}" font-weight="700" font-size="15" fill="${C.ink}">${d.sens >= 1000 ? d.sens / 1000 + "A" : d.sens}</text><text x="31" y="90" text-anchor="middle" font-family="${M}" font-weight="700" font-size="17" fill="${C.ink}">${d.tipo}${d.ret === "S" ? " S" : d.ret === "R" ? " Δt" : ""}</text></svg>`;
+  const modM = (x, y, m) => `<svg x="${x + 5}" y="${y}" width="21" height="52" viewBox="-1 -1 42 106"><rect width="40" height="104" rx="6" fill="#fff" stroke="${C.ink}" stroke-width="2.4"/><rect x="11" y="16" width="18" height="26" rx="3" fill="${C.navy}"/><text x="20" y="72" text-anchor="middle" font-family="${M}" font-weight="700" font-size="22" fill="${C.ink}">${m.cv}</text></svg>`;
+  const CW = 268, RH = 64, HEAD = 62, GX = 26, GY = 44, PAD = 36;
+  const alto = i => HEAD + (r.cuadros[i].difs.length + 1 + (r.cuadros[i].iga ? 1 : 0) + (r.cuadros[i].spd && r.cuadros[i].spd.nivel !== "no" ? 1 : 0)) * RH + 8;
+  const ancho = i => { const h = hijos(i); return h.length ? Math.max(CW, h.map(ancho).reduce((a, b) => a + b + GX, -GX)) : CW; };
+  const maxP = Math.max(...r.cuadros.map((_, i) => prof(i))), hNiv = []; for (let p = 0; p <= maxP; p++) hNiv[p] = Math.max(...r.cuadros.map((_, i) => prof(i) === p ? alto(i) : 0));
+  const yNiv = []; let yy = 0; hNiv.forEach((h, p) => { yNiv[p] = yy; yy += h + GY; });
+  const pos = []; const coloca = (i, x0) => { const w = ancho(i), h = hijos(i); pos[i] = {x: x0 + (w - CW) / 2, y: yNiv[prof(i)]}; let x = x0 + (w - h.map(ancho).reduce((a, b) => a + b + GX, -GX)) / 2; h.forEach(j => { coloca(j, x); x += ancho(j) + GX; }); };
+  const treeW = ancho(0); coloca(0, 0);
+  const W = Math.max(920, treeW + PAD * 2), TOP = 208, treeH = yy - GY, H = TOP + treeH + 118, ox = (W - treeW) / 2;
+  const lugar = {viv: "Vivienda", ter: "Local o terciario", ind: "Industria"}[st.lugar];
+  const fecha = new Date().toLocaleDateString("es-ES", {day: "numeric", month: "long", year: "numeric"});
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${F}"><rect width="${W}" height="${H}" fill="${C.bg}"/>`;
+  // encabezado
+  s += `<rect width="${W}" height="112" fill="${C.navy}"/><rect x="${PAD}" y="30" width="52" height="52" rx="13" fill="#fff" fill-opacity=".14"/><g transform="translate(${PAD + 12},42) scale(1.17)" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6m0 6v6M18 3v4m0 10v4"/><path d="M6 9l5 6"/><rect x="14" y="7" width="8" height="10" rx="2"/></g>
+    <text x="${PAD + 70}" y="54" font-size="25" font-weight="700" fill="#fff">Esquema de protecciones</text><text x="${PAD + 70}" y="79" font-size="${st.obra ? 16 : 14.5}" font-weight="${st.obra ? 600 : 400}" fill="#fff" fill-opacity="${st.obra ? 1 : .8}">${st.obra ? X(st.obra) : "Asesor de protecciones REBT · diferenciales y magnetotérmicos de cada cuadro"}</text>
+    <text x="${W - PAD}" y="52" text-anchor="end" font-size="16" font-weight="700" fill="#fff">${lugar}</text><text x="${W - PAD}" y="76" text-anchor="end" font-size="13.5" fill="#fff" fill-opacity=".8">${fecha}</text>`;
+  // datos generales
+  const tierra = Math.floor(r.tierra + 1e-6), datos = [["Cuadros", String(n)], ["Niveles en serie", String(r.cadena ? r.cadena.length : 1)], ["Tierra máxima", tierra.toLocaleString("es-ES") + " Ω"]];
+  if (st.lugar === "viv") datos.splice(1, 1, ["Circuitos", String(r.ncirc) + (r.elevada ? " · elevada" : " · básica")]);
+  let dx = PAD; datos.forEach(([k, v]) => { const w = Math.max(k.length * 8.2, v.length * 11.5) + 32; s += `<rect x="${dx}" y="132" width="${w}" height="54" rx="12" fill="${C.card}" stroke="${C.line}"/><text x="${dx + 16}" y="153" font-size="12" font-weight="600" fill="${C.mute}">${k.toUpperCase()}</text><text x="${dx + 16}" y="175" font-size="18" font-weight="700" fill="${C.ink}">${X(v)}</text>`; dx += w + 12; });
+  if (r.cadena && r.cadena.length > 1) { const e = r.est || "ok", t = e === "ok" ? "Cada nivel espera al de aguas abajo" : e === "warn" ? "Cumple la guía, con una zona sin garantía" : "Sin garantía: demasiados niveles";
+    const fg = e === "ok" ? C.ok : e === "warn" ? C.warn : "#a8271e", bg = e === "ok" ? C.okbg : e === "warn" ? C.warnbg : "#fbe2df", w = Math.min(W - PAD - dx, t.length * 8.6 + 36);
+    s += `<rect x="${dx}" y="132" width="${w}" height="54" rx="12" fill="${bg}"/><text x="${dx + 16}" y="153" font-size="12" font-weight="600" fill="${fg}">SELECTIVIDAD</text><text x="${dx + 16}" y="175" font-size="15.5" font-weight="700" fill="${fg}">${t}</text>`; }
+  // líneas del árbol
+  r.cuadros.forEach((_, i) => { const h = hijos(i); if (!h.length) return; const px = ox + pos[i].x + CW / 2, py = TOP + pos[i].y + alto(i), my = TOP + yNiv[prof(i) + 1] - GY / 2;
+    s += `<path d="M${px} ${py}V${my}" stroke="${C.mute}" stroke-width="2" fill="none"/>`; h.forEach(j => { const cx = ox + pos[j].x + CW / 2; s += `<path d="M${px} ${my}H${cx}V${TOP + pos[j].y}" stroke="${C.mute}" stroke-width="2" fill="none" stroke-linejoin="round"/>`; }); });
+  // cuadros
+  r.cuadros.forEach((c, i) => { const x = ox + pos[i].x, y = TOP + pos[i].y, h = alto(i), col = C.lv[prof(i) % 4];
+    s += `<g><rect x="${x}" y="${y}" width="${CW}" height="${h}" rx="14" fill="${C.card}" stroke="${C.line}" stroke-width="1.5"/><path d="M${x} ${y + 14}a14 14 0 0 1 14 -14h${CW - 28}a14 14 0 0 1 14 14v-6h-${CW}z" fill="${col}"/><rect x="${x}" y="${y + 6}" width="${CW}" height="4" fill="${col}"/>
+      <text x="${x + 16}" y="${y + 35}" font-size="17" font-weight="700" fill="${C.ink}">${X(c.nombre)}</text><text x="${x + 16}" y="${y + 53}" font-size="12" fill="${C.mute}">${i ? "aguas abajo de " + X(r.cuadros[pa(i)].nombre) : "origen de la instalación"}</text>`;
+    let ry = y + HEAD;
+    if (c.iga) { s += `<line x1="${x + 14}" x2="${x + CW - 14}" y1="${ry}" y2="${ry}" stroke="${C.line}"/><svg x="${x + 14}" y="${ry + 6}" width="31" height="52" viewBox="-1 -1 64 106"><rect width="62" height="104" rx="6" fill="#fff" stroke="${C.ink}" stroke-width="2.4"/><rect x="12" y="16" width="38" height="24" rx="3" fill="${C.navy}"/><text x="31" y="66" text-anchor="middle" font-family="${M}" font-weight="700" font-size="16" fill="${C.ink}">IGA</text><text x="31" y="90" text-anchor="middle" font-family="${M}" font-weight="700" font-size="16" fill="${C.ink}">${c.iga.In}A</text></svg>
+      <text x="${x + 58}" y="${ry + 20}" font-size="11.5" font-weight="600" fill="${C.mute}">INTERRUPTOR GENERAL (IGA)</text><text x="${x + 58}" y="${ry + 39}" font-size="15.5" font-weight="700" fill="${C.ink}">${c.iga.In} A${c.iga.mas ? " o más" : ""}</text><text x="${x + 58}" y="${ry + 55}" font-size="12.5" fill="${C.ink}">poder de corte ≥ 4.500 A</text>`; ry += RH; }
+    if (c.spd && c.spd.nivel !== "no") { const p = c.spd; s += `<line x1="${x + 14}" x2="${x + CW - 14}" y1="${ry}" y2="${ry}" stroke="${C.line}"/><svg x="${x + 14}" y="${ry + 6}" width="31" height="52" viewBox="-1 -1 64 106"><rect width="62" height="104" rx="6" fill="#fff" stroke="${C.ink}" stroke-width="2.4"/><rect x="12" y="14" width="38" height="28" rx="3" fill="${C.navy}"/><path d="M33 17l-7 11h6l-4 11 9-13h-6z" fill="${C.sun}"/><text x="31" y="66" text-anchor="middle" font-family="${M}" font-weight="700" font-size="${p.t1 ? 13 : 17}" fill="${C.ink}">${p.t1 ? "T1+T2" : "T2"}</text><text x="31" y="90" text-anchor="middle" font-family="${M}" font-weight="700" font-size="13" fill="${C.ink}">${p.perm ? "tr+per" : "trans."}</text></svg>
+      <text x="${x + 58}" y="${ry + 20}" font-size="11.5" font-weight="600" fill="${C.mute}">SOBRETENSIONES · ${p.nivel === "obl" ? "OBLIGATORIO" : "RECOMENDADO"}</text><text x="${x + 58}" y="${ry + 39}" font-size="15.5" font-weight="700" fill="${C.ink}">${p.t1 ? "Tipo 1 + 2" : "Tipo 2"} · ${p.perm ? "trans. y perm." : "transitorias"}</text><text x="${x + 58}" y="${ry + 55}" font-size="12.5" fill="${C.ink}">aguas arriba del diferencial</text>`; ry += RH; }
+    c.difs.forEach(d => { const nn = Math.min(d.num || 1, 2); s += `<line x1="${x + 14}" x2="${x + CW - 14}" y1="${ry}" y2="${ry}" stroke="${C.line}"/>`; for (let k = 0; k < nn; k++) s += modD(x + 14 + k * 9, ry + 6, d);
+      const tx = x + 58 + (nn - 1) * 9; s += `<text x="${tx}" y="${ry + 20}" font-size="11.5" font-weight="600" fill="${C.mute}">${etq(d).toUpperCase()}${d.num > 1 ? " · " + d.num + " UNIDADES" : ""}</text><text x="${tx}" y="${ry + 39}" font-size="15.5" font-weight="700" fill="${C.ink}">${P.fI(d.sens)} · ${ret(d)}</text><text x="${tx}" y="${ry + 55}" font-size="12.5" fill="${C.ink}">tipo ${d.tipo}${d.ta ? " mínimo · " + d.ta + " aconsejado" : ""}</text>`; ry += RH; });
+    s += `<line x1="${x + 14}" x2="${x + CW - 14}" y1="${ry}" y2="${ry}" stroke="${C.line}"/>` + modM(x + 14, ry + 6, c.mag) + `<text x="${x + 58}" y="${ry + 20}" font-size="11.5" font-weight="600" fill="${C.mute}">MAGNETOTÉRMICOS${st.lugar === "viv" ? " (PIA)" : ""}</text><text x="${x + 58}" y="${ry + 39}" font-size="15.5" font-weight="700" fill="${C.ink}">Curva ${c.mag.cv}</text><text x="${x + 58}" y="${ry + 55}" font-size="12.5" fill="${C.ink}">uno por circuito</text></g>`; });
+  // pie
+  const py = TOP + treeH + 40;
+  s += `<line x1="${PAD}" x2="${W - PAD}" y1="${py}" y2="${py}" stroke="${C.line}"/>`;
+  let lx = PAD; ["Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4"].slice(0, maxP + 1).forEach((t, k) => { s += `<rect x="${lx}" y="${py + 16}" width="14" height="14" rx="3" fill="${C.lv[k]}"/><text x="${lx + 20}" y="${py + 28}" font-size="12.5" font-weight="600" fill="${C.ink}">${t}</text>`; lx += 78; });
+  s += `<text x="${PAD}" y="${py + 54}" font-size="11.5" fill="${C.mute}">Orientativo. Base: REBT, guías BT-22, BT-23, BT-24 y BT-25 y UNE-HD 60364-4-41. Solo esquema TT. No sustituye al proyecto ni a la memoria técnica.</text>`;
+  return s + `</svg>`;
+}
+let ultimo = "", ultimoR = null;
+function resumen(r) {
+  const L = [], viv = st.lugar === "viv", rango = (x, y) => (Math.abs(x - y) < 0.05 ? "" : "entre " + P.fN(x, 1) + " y ") + P.fN(y, 1) + " mA";
+  L.push("ASESOR DE PROTECCIONES REBT"); if (st.obra) L.push(st.obra);
+  L.push({viv: "Vivienda", ter: "Local o terciario", ind: "Industria"}[st.lugar] + (viv ? " · " + r.ncirc + " circuitos · electrificación " + (r.elevada ? "elevada" : "básica") : "") + " · " + (r.cuadros.length > 1 ? "cuadro general y " + (r.cuadros.length - 1) + (r.cuadros.length > 2 ? " subcuadros" : " subcuadro") : "solo cuadro general"));
+  r.cuadros.forEach((c, i) => {
+    L.push("", c.nombre.toUpperCase() + (viv && r.circ ? " (" + r.circ[i] + (r.circ[i] === 1 ? " circuito)" : " circuitos)") : ""));
+    const cs = P.CARGAS.filter(x => st.cargas[i].includes(x.id)).map(x => x.n + (x.fu ? (x.fuU === "kW" ? " (" + String(st.cant[i][x.id] ?? 1).replace(".", ",") + " kW)" : " ×" + (st.cant[i][x.id] ?? 1)) : ""));
+    L.push("  Cuelga: " + (cs.length ? cs.join("; ") : "nada indicado"));
+    c.difs.forEach(d => {
+      L.push("  " + d.nombre + ": " + (d.num > 1 ? d.num + " × " : "") + P.fI(d.sens) + " · " + retTxt(d) + " · tipo " + d.tipo + (d.ta ? " como mínimo" : ""));
+      if (d.ta) L.push("    Aconsejado: tipo " + d.ta + " (" + d.taPor + ")"); else if (d.si) L.push("    Aconsejado: superinmunizado");
+      if (d.fug && d.fug.hay) L.push("    Fuga estimada" + (d.fug.n > 1 ? " por diferencial" : "") + ": " + rango(d.fug.pmin, d.fug.pmax) + " · recomendado hasta " + P.fN(d.fug.l30, 1) + " mA, máximo " + P.fN(d.fug.l50, 1) + " mA · " + {ok: "bien", warn: "a vigilar", bad: "excesiva"}[d.fug.est]);
+    });
+    if (c.spd) L.push("  Protector contra sobretensiones: " + SPDN[c.spd.nivel][1].toLowerCase() + (c.spd.nivel === "no" ? "" : " · " + (c.spd.t1 ? "tipo 1 en el origen y tipo 2 en el cuadro" : "tipo 2") + " · " + (c.spd.perm ? "transitorias y permanentes" : "transitorias") + " · aguas arriba del diferencial" + (c.spd.t3 ? " · tipo 3 junto a equipos sensibles" : "")));
+    if (c.spd2) L.push("  Protector tipo 2 adicional recomendado si el cuadro está a más de unos 10 m del general");
+    if (c.iga) L.push("  Interruptor general (IGA): " + c.iga.In + " A" + (c.iga.mas ? " o más" : "") + " · poder de corte mínimo 4.500 A");
+    if (!c.difs.length) L.push("  Sin diferencial en este cuadro");
+    L.push("  " + (c.mag.nombre || "Magnetotérmicos de sus circuitos") + ": curva " + c.mag.cv);
+    if (c.aviso) L.push("  Nota: " + c.aviso);
+  });
+  L.push("", "TODA LA INSTALACIÓN");
+  if (r.cadena && r.cadena.length > 1) L.push("  Selectividad" + (r.cadena.length > 2 ? " (rama más larga)" : "") + ": " + r.cadena.map(x => x.nombre + " " + P.fI(x.d.sens) + " " + retTxt(x.d)).join(" → ") + " · " + (r.veredicto || ""));
+  L.push("  Tierra: hasta " + P.fN(Math.floor(r.tierra + 1e-6)) + " Ω, o " + P.fN(Math.floor(r.tierra * 24 / 50 + 1e-6)) + " Ω en locales húmedos o mojados (ITC-BT-24)");
+  if (r.elevada) L.push("  Electrificación elevada: " + r.ncirc + " circuitos como mínimo, interruptor general de 40 A o más (ITC-BT-25 e ITC-BT-10)");
+  r.notas.forEach(x => L.push("  " + ETQ[x.e][1] + ": " + x.t));
+  L.push("", "Orientativo. Asesor de protecciones REBT, beta 1, " + new Date().toLocaleDateString("es-ES") + ". Solo esquema TT.");
+  return L.join("\n");
+}
+function pinta() {
+  [...$("lugarSeg").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.v === st.lugar));
+  if (!st.lugar) { $("out").innerHTML = `<div class="vacio"><b>Aún no hay nada que mostrar</b><span>Elige si es una vivienda, un local o una industria. Aparecerá una tarjeta por cuadro: lo que cuelga de él y lo que hay que poner.</span></div>`; return; }
+  const r = P.recomienda(st);
+  if (r.circ) { r.circ.forEach((v, i) => { if (i) st.circ[i] = v; const e = $("circ" + i); if (e) { e.min = i ? 1 : 5; e.removeAttribute("max"); if (!i) st.circ[0] = v; if (document.activeElement !== e) e.value = v; } });
+    $("ncirc").textContent = r.ncirc + (r.ncirc === 1 ? " circuito" : " circuitos") + " · electrificación " + (r.elevada ? "elevada" : "básica"); }
+  r.cuadros.forEach(c => c.difs.forEach(d => { d.corto = /cabecera/.test(d.nombre) ? "Cabecera" : /directos/.test(d.nombre) ? "Directos" : /recarga/.test(d.nombre) ? "Recarga" : "Diferencial"; }));
+  const razon = x => `<li><span class="etq ${ETQ[x.e][0]}">${ETQ[x.e][1]}</span><span>${esc(x.t)}</span></li>`;
+  let graf = ""; const cad = r.cadena && r.cadena.length > 1 ? r.cadena : null, COL = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)"];
+  if (cad) { const sol = []; (r.pares || []).forEach(q => P.difSolape(q.up.d, q.dn.d).forEach(z => sol.push({z, up: q.up, dn: q.dn})));
+    const est = r.exceso ? "bad" : sol.length ? "warn" : "ok";
+    r.est = est; r.veredicto = est === "ok" ? "selectivos" : est === "warn" ? "selectivos según la regla de la guía, con una zona sin garantía por tiempos" : "sin selectividad garantizada";
+    graf = `<div class="graf"><div class="tit2"><h3>Selectividad ${cad.length > 2 ? "de la rama más larga" : "entre los dos cuadros"}</h3>${INFO("tgraf", "cómo leer la gráfica")}</div>
+      <div class="gcols"><div class="glado"><p class="veredicto ${est}">${est === "ok" ? "<b>Selectivos.</b> Cada nivel espera a que corte el de aguas abajo." : est === "warn" ? "<b>Selectivos según la guía</b> (retardo y triple de sensibilidad). Con los tiempos máximos de norma queda una zona sin garantía entre " + P.fI(Math.round(sol[0].z[0])) + " y " + P.fI(Math.round(sol[0].z[1])) + " de fuga, entre " + esc(sol[0].up.nombre.toLowerCase()) + " y " + esc(sol[0].dn.nombre.toLowerCase()) + "." : "<b>Sin selectividad garantizada.</b> Hay más niveles de los que caben."}</p>
+      <p class="hint tip" id="tgraf" hidden>Cada franja va desde que el aparato puede empezar a responder hasta su tiempo máximo de corte (UNE-EN 61008 y, para los regulables, catálogo ComPacT NSX). Si cada franja queda por encima de la del nivel de aguas abajo, da tiempo a que corte primero el de aguas abajo.</p>
+      <div class="ley">${cad.map((x, j) => `<span><i style="background:${COL[prf(x.i) % 4]}"></i>${esc(x.nombre)}: ${P.fI(x.d.sens)} ${retTxt(x.d)}</span>`).join("")}</div>
+      <div class="lect" id="gdl"></div></div><div id="gd"></div></div></div>`; }
+  if (st.lugar !== "viv") { const NM = P.nombres(st); r.cuadros.forEach((c, i) => { c.nombre = NM[i]; const b = $("bn" + i); if (b) b.textContent = NM[i]; const rt = $("rt" + i); if (rt) { const pa = []; for (let p = st.padre[i]; p != null; p = st.padre[p]) pa.unshift(NM[p]); rt.textContent = pa.join(" › ") + " ›"; } });
+    const ae = document.activeElement; if (!(ae && ae.classList && ae.classList.contains("nin"))) mapa(r); }
+  r.cuadros.forEach((c, i) => { if (!$("pone" + i)) return;
+    $("pone" + i).innerHTML = `<p class="sub">Qué poner</p>${c.aviso ? `<p class="nota">${esc(c.aviso)}</p>` : ""}${c.iga ? fichaIGA(c.iga, razon) : ""}${c.spd ? fichaSPD(c.spd, razon) : ""}${c.spd2 ? `<p class="nota"><b>Protector tipo 2 adicional</b>, recomendado si este cuadro está a más de unos 10 m del general (guía BT-23, ap. 3.2).</p>` : ""}` + c.difs.map(d => `
+      <div class="aparato"><div class="apc${d.num > 1 ? " varios" : ""}">${mods(d)}<div class="apt"><small>${esc(d.nombre)}${d.num > 1 ? " · " + d.num + " unidades" : ""}</small>
+        <div class="ficha"><b>${P.fI(d.sens)}</b><span>${retTxt(d)}</span><span>tipo ${d.tipo}${d.ta ? " como mínimo" : ""}</span></div></div></div>
+        ${d.ta ? `<p class="acon"><b>Tipo ${d.ta} aconsejado:</b> ${esc(d.taPor)}.</p>` : d.si ? `<p class="acon"><b>Superinmunizado aconsejado</b> por los filtros de los aparatos.</p>` : ""}
+        ${barraFuga(d)}
+        <details><summary>Por qué</summary><ul class="razones">${d.R.map(razon).join("")}</ul></details></div>`).join("") + fichaMag(c.mag, razon);
+  });
+  let h = `<p class="sub">Toda la instalación</p>` + graf + `<div class="tags">${r.elevada ? `<button type="button" class="tag" data-tip="tElev" aria-expanded="false"><b>Elevada</b> ${r.ncirc} circuitos · IGA ≥ 40 A</button>` : ""}<button type="button" class="tag" data-tip="tTierra" aria-expanded="false"><b>Tierra</b> hasta ${P.fN(Math.floor(r.tierra + 1e-6))} Ω</button></div>`;
+  if (r.elevada) h += `<p class="nota tip" id="tElev" hidden><b>Electrificación elevada:</b> ${r.ncirc} circuitos como mínimo y 9.200 W de potencia prevista, que corresponden a un interruptor general de 40 A o más. <span class="etq obl">Obligatorio</span> ITC-BT-25, ap. 2.3.2, e ITC-BT-10; calibre según la tabla A de la guía BT-25.</p>`;
+  h += `<p class="nota tip" id="tTierra" hidden><b>Tierra:</b> con ${P.fI(r.tope)} como diferencial menos sensible, la resistencia de puesta a tierra no puede pasar de ${P.fN(Math.floor(r.tierra + 1e-6))} Ω (${P.fN(Math.floor(r.tierra * 24 / 50 + 1e-6))} Ω en locales húmedos o mojados). <span class="etq obl">Obligatorio</span> ITC-BT-24: R<sub>A</sub> · I<sub>Δn</sub> ≤ 50 V, o 24 V.${st.lugar === "viv" ? ' <span class="etq">Recomendado</span> En edificios de viviendas, la guía BT-26 da como referencia práctica menos de 37 Ω sin pararrayos y menos de 15 Ω con pararrayos.' : ""}</p>`;
+  h += r.notas.map(x => `<p class="nota aviso"><span class="etq dest">${ETQ[x.e][1]}</span> ${esc(x.t)}</p>`).join("");
+  const abiertas = [...document.querySelectorAll("#out .tip:not([hidden])")].map(e => e.id);
+  r.cuadros.forEach((c, i) => { const e = $("rsm" + i); if (e) e.textContent = c.difs.map(d => (d.num > 1 ? d.num + " × " : "") + P.fI(d.sens) + " " + retTxt(d) + " tipo " + d.tipo).concat(["curva " + c.mag.cv]).join(" · "); });
+  $("out").innerHTML = h; ultimoR = r; ultimo = resumen(r); if (!$("resumen").hidden) $("resumen").value = ultimo;
+  abiertas.forEach(id => { const e = $(id), b = document.querySelector(`#out [data-tip="${id}"]`); if (e && b) { e.hidden = false; b.setAttribute("aria-expanded", "true"); } });
+  if ($("gd")) { const x1 = Math.max(5000, r.tope * 10);
+    grafica("gd", {x0: 5, x1, y0: 0.01, y1: 1, xl: "Corriente de fuga (mA)", aria: "Tiempos de disparo de los diferenciales de la rama según la corriente de fuga",
+      xt: [[10,"10"],[30,"30"],[100,"100"],[300,"300"],[1000,"1 A"],[3000,"3 A"],[10000,"10 A"],[30000,"30 A"]].filter(q => q[0] <= x1 * 0.8), yt: [[0.01,"0,01 s"],[0.04,"0,04"],[0.1,"0,1"],[0.3,"0,3"],[1,"1 s"]], xi: 300,
+      dev: cad.map(q => ({color: COL[prf(q.i) % 4], f: x => P.difBanda(q.d, x)})),
+      lee: x => "Fuga de " + P.fI(Math.round(x)) + "\n" + cad.map(q => { const b = P.difBanda(q.d, x); return q.nombre + ": " + (!b ? "no dispara" : b.hi === Infinity ? "puede disparar, sin tiempo garantizado" : (b.lo > 0 ? "no responde antes de " + P.fT(b.lo) + " y " : "") + "corta en " + P.fT(b.hi) + " como máximo"); }).join("\n")}); }
+}
+
+/* El circuito que añade o quita un receptor de electrificación elevada se apunta al cuadro donde está */
+const ELEVA = ["clima", "calefel", "calef", "ve"];
+const totalC = () => st.lugar === "viv" ? P.recomienda(st).ncirc : 0;
+const mueveC = (i, t0, id, quita) => { if (st.lugar !== "viv" || !ELEVA.includes(id)) return;
+  if (quita) { if (st.auto[i] > 0 && !st.cargas.some(l => l.includes(id))) { st.auto[i]--; st.circ[i] = Math.max(i ? 1 : 5, (+st.circ[i] || 0) - 1); } }
+  else { const d = totalC() - t0; if (d > 0) { st.circ[i] = (+st.circ[i] || (i ? 2 : 5)) + d; st.auto[i] = (st.auto[i] || 0) + d; } } };
+const quitaCuadro = i => { const borra = new Set([i]); st.padre.forEach((p, j) => { if (borra.has(p)) borra.add(j); });
+  const mapa = []; let q = 0; st.padre.forEach((_, j) => { mapa[j] = borra.has(j) ? -1 : q++; });
+  const vuelve = borra.has(st.sel) ? (st.padre[i] || 0) : st.sel;
+  ["cargas", "cant", "cable", "otras", "mag", "circ", "auto", "padre", "plegado", "nombre"].forEach(k => { st[k] = st[k].filter((_, j) => !borra.has(j)); });
+  st.padre = st.padre.map(p => p == null ? null : mapa[p]); st.sel = Math.max(0, mapa[vuelve]); st.abiertos = {}; pintaCargas(); pinta(); };
+const anade = p => { st.cargas.push([]); st.cant.push({}); st.cable.push(""); st.otras.push(""); st.mag.push(MAG0()); st.circ.push(2); st.auto.push(0); st.padre.push(p); st.plegado.push(false); st.nombre.push(null); if (st.lugar !== "viv") st.sel = st.cargas.length - 1; pintaCargas(); pinta(); };
+$("mapa").addEventListener("input", ev => { const d = ev.target.dataset; if (d.nom == null) return; st.nombre[+d.nom] = ev.target.value; const o = $("nom" + d.nom); if (o) o.value = ev.target.value; pinta(); });
+$("mapa").addEventListener("focusout", ev => { if (ev.target.classList && ev.target.classList.contains("nin")) setTimeout(pinta, 0); });
+$("mapa").addEventListener("keydown", ev => { if (ev.target.classList.contains("nin")) { if (ev.key === "Enter") ev.target.blur(); return; } if ((ev.key === "Enter" || ev.key === " ") && ev.target.dataset.sel != null) { ev.preventDefault(); ev.target.click(); } });
+$("mapa").addEventListener("click", ev => { const b = ev.target.closest("[data-sel],[data-massub],[data-quitasub]"); if (!b) return;
+  if (ev.target.classList.contains("nin")) { const i = +b.dataset.sel; if (i !== st.sel) { st.sel = i; document.querySelectorAll("#mapa .nodo").forEach(n => { const on = +n.dataset.sel === i; n.classList.toggle("on", on); n.setAttribute("aria-pressed", on); }); pintaCargas(); pinta(); } return; }
+  if (b.dataset.quitasub != null) quitaCuadro(+b.dataset.quitasub); else if (b.dataset.massub != null) anade(+b.dataset.massub); else { st.sel = +b.dataset.sel; pintaCargas(); pinta(); } });
+$("lugarSeg").onclick = ev => { const v = ev.target.dataset.v; if (v) { st.lugar = v; if (v === "viv") st.padre = st.padre.map((p, i) => i ? 0 : null); pintaCargas(); pinta(); } };
+$("cargas").addEventListener("click", ev => { const d = ev.target.dataset;
+  if (d.massub) { anade(+d.massub); const nu = $("pone" + (st.cargas.length - 1)); if (nu) nu.closest(".tabl").scrollIntoView({behavior: "smooth", block: "start"}); }
+  else if (d.quitasub) quitaCuadro(+d.quitasub);
+  else if (false) { const borra = new Set([+d.quitasub]); st.padre.forEach((p, j) => { if (borra.has(p)) borra.add(j); });
+    const mapa = []; let q = 0; st.padre.forEach((_, j) => { mapa[j] = borra.has(j) ? -1 : q++; });
+    const vuelve = st.padre[+d.quitasub] || 0;
+    ["cargas", "cant", "cable", "otras", "mag", "circ", "padre", "plegado", "nombre"].forEach(k => { st[k] = st[k].filter((_, j) => !borra.has(j)); });
+    st.padre = st.padre.map(p => p == null ? null : mapa[p]); st.sel = Math.max(0, mapa[vuelve]); st.abiertos = {}; pintaCargas(); pinta(); }
+  else if (d.pliega != null) { st.plegado[+d.pliega] = !st.plegado[+d.pliega]; pintaCargas(); pinta(); }
+  else if (d.quita) { const l = st.cargas[+d.i], k = l.indexOf(d.quita), t0 = totalC(); if (k >= 0) l.splice(k, 1); mueveC(+d.i, t0, d.quita, true); pintaCargas(); pinta(); } });
+$("cargas").addEventListener("change", ev => { const d = ev.target.dataset;
+  if (!d.anade || !ev.target.value) return; const id = ev.target.value, sid = ev.target.id, t0 = totalC(); st.cargas[+d.i].push(id); mueveC(+d.i, t0, id, false); pintaCargas(); pinta(); const n = $(sid); if (n) n.focus(); });
+$("cargas").addEventListener("toggle", ev => { const k = ev.target.dataset && ev.target.dataset.g; if (k) st.abiertos[k] = ev.target.open; }, true);
+const cantCambia = ev => { const d = ev.target.dataset; if (d.q != null) st.cant[+d.q][d.c] = ev.target.value; else if (d.cab != null) st.cable[+d.cab] = ev.target.value; else if (d.otr != null) st.otras[+d.otr] = ev.target.value; else if (d.nom != null) st.nombre[+d.nom] = ev.target.value; else if (d.circ === "0") st.circ[0] = Math.max(5, parseInt(ev.target.value) || 5); else if (d.circ != null) st.circ[+d.circ] = Math.max(1, parseInt(ev.target.value) || 1); else return; pinta(); };
+$("cargas").addEventListener("input", cantCambia);
+$("cargas").addEventListener("click", ev => { const d = ev.target.dataset; if (!d.paso) return;
+  const inp = $(d.para), v = Math.max(1, Math.round((parseFloat(inp.value) || 0) + +d.paso)); inp.value = v; st.cant[+inp.dataset.q][inp.dataset.c] = String(v); pinta(); });
+document.addEventListener("click", ev => { const b = ev.target.closest("[data-tip]"); if (!b) return; ev.preventDefault();
+  const e = $(b.dataset.tip); if (!e) return; e.hidden = !e.hidden; b.setAttribute("aria-expanded", String(!e.hidden)); const dt = e.closest("details"); if (dt && !e.hidden && !dt.open) { dt.open = true; if (dt.dataset.g) st.abiertos[dt.dataset.g] = true; } });
+const magCambia = ev => { const d = ev.target.dataset; if (d.m == null) return; st.mag[+d.m][d.k] = ev.target.value; pinta(); };
+$("cargas").addEventListener("change", magCambia); $("cargas").addEventListener("input", magCambia);
+document.addEventListener("focusout", ev => { if (ev.target.dataset && ev.target.dataset.circ != null) setTimeout(pinta, 0); });
+/* Descarga: dentro de claude.ai pasa por su permiso de descargas; fuera, enlace directo */
+let DL = null; if (window.claude && window.claude.use) window.claude.use("downloads").then(x => { DL = x; }, () => {});
+const spdLee = () => { st.spd = {aerea: $("spAerea").checked, rayo: $("spRayo").value, critico: $("spCrit").checked, torm: $("spTorm").value}; pinta(); };
+["spAerea", "spRayo", "spCrit", "spTorm"].forEach(k => $(k).addEventListener("change", spdLee));
+const spdPon = () => { $("spAerea").checked = st.spd.aerea; $("spRayo").value = st.spd.rayo; $("spCrit").checked = st.spd.critico; $("spTorm").value = st.spd.torm; };
+$("obra").oninput = () => { st.obra = $("obra").value.trim(); if (ultimoR) ultimo = resumen(ultimoR); };
+$("descargar").onclick = () => { if (!ultimoR) return; const svg = lamina(st, ultimoR, P), m = svg.match(/width="([\d.]+)" height="([\d.]+)"/), w = +m[1], h = +m[2], img = new Image();
+  const aviso = t => { $("copiado").textContent = t; setTimeout(() => $("copiado").textContent = "", 6000); };
+  img.onload = () => { try { const cv = document.createElement("canvas"), k = 2; cv.width = w * k; cv.height = h * k; const cx = cv.getContext("2d"); cx.scale(k, k); cx.drawImage(img, 0, 0, w, h);
+      const url = cv.toDataURL("image/png"), nombre = "esquema-protecciones" + (st.obra ? "-" + st.obra.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "") + ".png";
+      $("lamImg").src = url; $("lamina").hidden = false; $("lamina").scrollIntoView({behavior: "smooth", block: "nearest"});
+      if (DL) cv.toBlob(b => { DL.save({filename: nombre, data: b}).then(() => aviso("Esquema guardado"), e => aviso(e && e.code === "declined" ? "Descarga cancelada. La imagen queda aquí abajo" : "No se ha podido descargar: guarda la imagen de aquí abajo")); }, "image/png");
+      else if (window.claude) aviso("Esquema generado: guarda la imagen de aquí abajo");
+      else { const l = document.createElement("a"); l.href = url; l.download = nombre; document.body.appendChild(l); l.click(); l.remove(); aviso("Esquema generado"); }
+    } catch (e) { aviso("No se ha podido generar la imagen en este navegador"); } };
+  img.onerror = () => aviso("No se ha podido generar la imagen en este navegador");
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); };
+$("copiar").onclick = () => { const fin = ok => { $("copiado").textContent = ok ? "Copiado" : "Selecciona el texto y cópialo"; if (!ok) { $("resumen").hidden = false; $("resumen").value = ultimo; $("resumen").select(); } setTimeout(() => $("copiado").textContent = "", 4000); };
+  try { navigator.clipboard.writeText(ultimo).then(() => fin(true), () => fin(false)); } catch (e) { fin(false); } };
+$("reset").onclick = () => { $("resumen").hidden = true; $("lamina").hidden = true; $("obra").value = ""; st = VACIO(); spdPon(); pintaCargas(); pinta(); window.scrollTo({top: 0, behavior: "smooth"}); };
+pintaCargas(); pinta();
+})();
+
+</script>
+
+</body>
+</html>
