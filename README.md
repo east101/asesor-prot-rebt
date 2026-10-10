@@ -52,8 +52,3 @@ Creative Commons BY-NC-SA 4.0: se puede usar y adaptar citando la autoría, sin 
 
 Orientativo. No sustituye al proyecto ni a la memoria técnica. Los tiempos de los diferenciales regulables son los de un fabricante concreto: con otro, hay que comprobar su tabla.
 
-## Publicar en GitHub Pages
-
-1. Sube `index.html`, `README.md` y `CAMBIOS.md` a la raíz del repositorio.
-2. En Settings → Pages, elige la rama `main` y guarda.
-3. La página queda en `https://<usuario>.github.io/<repositorio>/`.
